@@ -9,17 +9,17 @@ self.addEventListener('message', async (event: MessageEvent) => {
   try {
     switch (type) {
       case 'parse':
-        console.log('🔧 Worker: Received parse request');
-        console.log('🔧 Worker: Data size:', data.byteLength, 'bytes');
+        console.log('Worker: Received parse request');
+        console.log('Worker: Data size:', data.byteLength, 'bytes');
         
         if (!parser) {
           parser = new PCAPParser();
-          console.log('🔧 Worker: Parser created');
+          console.log('Worker: Parser created');
         }
         
-        console.log('🔧 Worker: Starting parse...');
+        console.log('Worker: Starting parse...');
         const packets = await parser.parse(data);
-        console.log('🔧 Worker: Parse returned', packets.length, 'packets');
+        console.log('Worker: Parse returned', packets.length, 'packets');
         
         // Send packets in chunks to avoid blocking
         const chunkSize = 1000;

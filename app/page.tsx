@@ -45,8 +45,8 @@ export default function Home() {
   }, []);
 
   const handleFileUpload = useCallback(async (file: File) => {
-    console.group('🦈 AIShark PCAP File Upload');
-    console.log('📁 File Details:', {
+    console.group('AIShark PCAP File Upload');
+    console.log('File Details:', {
       name: file.name,
       size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
       type: file.type,
@@ -60,20 +60,20 @@ export default function Home() {
     setAnalysis(null);
 
     try {
-      console.log('📖 Reading file as ArrayBuffer...');
+      console.log('Reading file as ArrayBuffer...');
       const startRead = performance.now();
       const arrayBuffer = await file.arrayBuffer();
       const readTime = performance.now() - startRead;
-      console.log(`✅ File read complete in ${readTime.toFixed(2)}ms`);
-      console.log(`📦 Buffer size: ${arrayBuffer.byteLength} bytes`);
+      console.log(`File read complete in ${readTime.toFixed(2)}ms`);
+      console.log(`Buffer size: ${arrayBuffer.byteLength} bytes`);
 
       // Create web worker for parsing
-      console.log('👷 Creating Web Worker for parsing...');
+      console.log('Creating Web Worker for parsing...');
       workerRef.current = new Worker(
         new URL('../workers/pcap.worker.ts', import.meta.url),
         { type: 'module' }
       );
-      console.log('✅ Worker created successfully');
+      console.log('Worker created successfully');
 
       const packets: Packet[] = [];
       const parseStartTime = performance.now();
@@ -83,15 +83,15 @@ export default function Home() {
 
         if (type === 'progress') {
           packets.push(...chunk);
-          console.log(`📊 Progress: ${current}/${total} packets (${((current/total)*100).toFixed(1)}%)`);
+          console.log(`Progress: ${current}/${total} packets (${((current/total)*100).toFixed(1)}%)`);
           
           // Update UI periodically
           if (packets.length % 1000 === 0 || packets.length === total) {
-            console.log('🔄 Enhancing packets with protocol analysis...');
+            console.log('Enhancing packets with protocol analysis...');
             const enhanceStart = performance.now();
             const enhanced = enhancePackets([...packets]);
             const enhanceTime = performance.now() - enhanceStart;
-            console.log(`✅ Enhanced ${enhanced.length} packets in ${enhanceTime.toFixed(2)}ms`);
+            console.log(`Enhanced ${enhanced.length} packets in ${enhanceTime.toFixed(2)}ms`);
             
             setAllPackets(enhanced);
             setFilteredPackets(enhanced);
@@ -102,25 +102,25 @@ export default function Home() {
               counts[p.protocol] = (counts[p.protocol] || 0) + 1;
             });
             setProtocolCounts(counts);
-            console.log('📈 Protocol Distribution:', counts);
+            console.log('Protocol Distribution:', counts);
           }
         } else if (type === 'complete') {
           const parseTime = performance.now() - parseStartTime;
-          console.log(`✅ Parsing complete in ${parseTime.toFixed(2)}ms`);
-          console.log(`📦 Total packets parsed: ${packets.length}`);
+          console.log(`Parsing complete in ${parseTime.toFixed(2)}ms`);
+          console.log(`Total packets parsed: ${packets.length}`);
           
-          console.log('🔍 Final enhancement pass...');
+          console.log('Final enhancement pass...');
           const enhanced = enhancePackets(packets);
           setAllPackets(enhanced);
           setFilteredPackets(enhanced);
           
           // Calculate statistics and perform analysis
-          console.log('📊 Calculating statistics...');
+          console.log('Calculating statistics...');
           const statsStart = performance.now();
           const stats = calculateStatistics(enhanced);
           const statsTime = performance.now() - statsStart;
-          console.log(`✅ Statistics calculated in ${statsTime.toFixed(2)}ms`);
-          console.log('📈 Statistics:', {
+          console.log(`Statistics calculated in ${statsTime.toFixed(2)}ms`);
+          console.log('Statistics:', {
             totalPackets: stats.totalPackets,
             protocols: Object.keys(stats.protocolDistribution).length,
             errors: stats.errors,
@@ -128,18 +128,18 @@ export default function Home() {
           });
           setStatistics(stats);
           
-          console.log('🔬 Performing analysis...');
+          console.log('Performing analysis...');
           const analysisStart = performance.now();
           const analysisResult = performAnalysis(enhanced);
           const analysisTime = performance.now() - analysisStart;
-          console.log(`✅ Analysis complete in ${analysisTime.toFixed(2)}ms`);
-          console.log('🔍 Analysis Results:', {
+          console.log(`Analysis complete in ${analysisTime.toFixed(2)}ms`);
+          console.log('Analysis Results:', {
             insights: analysisResult.insights.length,
             latencyIssues: analysisResult.latencyIssues.length,
             errors: analysisResult.errors.length,
           });
           if (analysisResult.insights.length > 0) {
-            console.warn('⚠️ Issues Found:', analysisResult.insights);
+            console.warn('Issues Found:', analysisResult.insights);
           }
           setAnalysis(analysisResult);
 
@@ -164,16 +164,16 @@ export default function Home() {
           }
 
           const totalTime = performance.now() - parseStartTime;
-          console.log(`🎉 Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
+          console.log(`Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
           console.groupEnd();
 
           if (workerRef.current) {
             workerRef.current.terminate();
             workerRef.current = null;
-            console.log('🛑 Worker terminated');
+            console.log('Worker terminated');
           }
         } else if (type === 'error') {
-          console.error('❌ Worker error:', event.data.error);
+          console.error('Worker error:', event.data.error);
           console.groupEnd();
           alert(`Error parsing file: ${event.data.error}`);
           setIsProcessing(false);
@@ -185,10 +185,10 @@ export default function Home() {
         }
       };
 
-      console.log('📤 Sending data to worker for parsing...');
+      console.log('Sending data to worker for parsing...');
       workerRef.current.postMessage({ type: 'parse', data: arrayBuffer });
     } catch (error) {
-      console.error('❌ Error processing file:', error);
+      console.error('Error processing file:', error);
       console.groupEnd();
       alert('Error processing file. Please ensure it is a valid PCAP/PCAPNG file.');
       setIsProcessing(false);
@@ -207,7 +207,7 @@ export default function Home() {
   }, []);
 
   const handleFilterChange = useCallback((filter: PacketFilter) => {
-    console.group('🔍 Filter Applied');
+    console.group('Filter Applied');
     console.log('Filter settings:', filter);
     
     let filtered = [...allPackets];
@@ -216,7 +216,7 @@ export default function Home() {
     // Filter by protocols
     if (filter.protocols && filter.protocols.length > 0) {
       filtered = filtered.filter(p => filter.protocols.includes(p.protocol));
-      console.log(`📌 Protocol filter: ${filter.protocols.join(', ')} - ${filtered.length} packets match`);
+      console.log(`Protocol filter: ${filter.protocols.join(', ')} - ${filtered.length} packets match`);
     }
 
     // Filter by source IP
@@ -225,7 +225,7 @@ export default function Home() {
       filtered = filtered.filter(p => 
         p.source.toLowerCase().includes(filter.sourceIP!.toLowerCase())
       );
-      console.log(`📌 Source IP filter: "${filter.sourceIP}" - ${filtered.length}/${beforeCount} packets match`);
+      console.log(`Source IP filter: "${filter.sourceIP}" - ${filtered.length}/${beforeCount} packets match`);
     }
 
     // Filter by destination IP
@@ -234,7 +234,7 @@ export default function Home() {
       filtered = filtered.filter(p => 
         p.destination.toLowerCase().includes(filter.destinationIP!.toLowerCase())
       );
-      console.log(`📌 Destination IP filter: "${filter.destinationIP}" - ${filtered.length}/${beforeCount} packets match`);
+      console.log(`Destination IP filter: "${filter.destinationIP}" - ${filtered.length}/${beforeCount} packets match`);
     }
 
     // Filter by search term
@@ -247,10 +247,10 @@ export default function Home() {
         p.info.toLowerCase().includes(term) ||
         p.protocol.toLowerCase().includes(term)
       );
-      console.log(`📌 Search filter: "${filter.searchTerm}" - ${filtered.length}/${beforeCount} packets match`);
+      console.log(`Search filter: "${filter.searchTerm}" - ${filtered.length}/${beforeCount} packets match`);
     }
 
-    console.log(`✅ Filter result: ${filtered.length}/${originalCount} packets (${((filtered.length/originalCount)*100).toFixed(1)}%)`);
+    console.log(`Filter result: ${filtered.length}/${originalCount} packets (${((filtered.length/originalCount)*100).toFixed(1)}%)`);
     console.groupEnd();
     setFilteredPackets(filtered);
   }, [allPackets]);
@@ -258,7 +258,7 @@ export default function Home() {
   const handlePacketClick = useCallback((packetId: number) => {
     const packet = allPackets.find(p => p.id === packetId);
     if (packet) {
-      console.log('📦 Packet Selected:', {
+      console.log('Packet Selected:', {
         id: packet.id,
         timestamp: packet.timeString,
         source: packet.source,
