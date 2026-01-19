@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import { intelligentSample } from '@/lib/client-sampler';
 
 interface AIInsightsProps {
   packets: Packet[];
@@ -23,10 +24,18 @@ export default function AIInsights({ packets, statistics, analysis }: AIInsights
     setError('');
 
     try {
+      // Use intelligent sampling: distributed samples + errors + protocol diversity
+      const sampledPackets = intelligentSample(packets, 200);
+      
       const response = await fetch('/api/analyze/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics, analysis }),
+        body: JSON.stringify({ 
+          packets: sampledPackets, 
+          packetCount: packets.length,
+          statistics, 
+          analysis 
+        }),
       });
 
       const data = await response.json();
@@ -53,10 +62,18 @@ export default function AIInsights({ packets, statistics, analysis }: AIInsights
     setError('');
 
     try {
+      // Use intelligent sampling: distributed samples + errors + protocol diversity
+      const sampledPackets = intelligentSample(packets, 200);
+      
       const response = await fetch('/api/analyze/anomaly', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics, analysis }),
+        body: JSON.stringify({ 
+          packets: sampledPackets,
+          packetCount: packets.length,
+          statistics, 
+          analysis 
+        }),
       });
 
       const data = await response.json();
