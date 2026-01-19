@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import { Bot, AlertTriangle } from 'lucide-react';
 
 interface AIInsightsProps {
   packets: Packet[];
@@ -76,7 +77,10 @@ export default function AIInsights({ packets, statistics, analysis }: AIInsights
   return (
     <div className="bg-white rounded-lg shadow p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">≡ƒñû AI Insights</h2>
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <Bot className="w-6 h-6 text-blue-600" />
+          AI Insights
+        </h2>
         <div className="flex gap-2">
           <button
             onClick={generateSummary}

@@ -453,19 +453,19 @@ export default function Home() {
               {/* Performance Stats */}
               <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white rounded-lg shadow p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-600">⚡ 1.4s</div>
+                  <div className="text-3xl font-bold text-blue-600">1.4s</div>
                   <div className="text-sm text-gray-600 mt-1">Parse 26K packets</div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-4 text-center">
-                  <div className="text-3xl font-bold text-green-600">💰 85%</div>
+                  <div className="text-3xl font-bold text-green-600">85%</div>
                   <div className="text-sm text-gray-600 mt-1">Cost savings</div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-4 text-center">
-                  <div className="text-3xl font-bold text-purple-600">🤖 2-4s</div>
+                  <div className="text-3xl font-bold text-purple-600">2-4s</div>
                   <div className="text-sm text-gray-600 mt-1">AI response time</div>
                 </div>
                 <div className="bg-white rounded-lg shadow p-4 text-center">
-                  <div className="text-3xl font-bold text-orange-600">🔒 100%</div>
+                  <div className="text-3xl font-bold text-orange-600">100%</div>
                   <div className="text-sm text-gray-600 mt-1">Privacy protected</div>
                 </div>
               </div>
@@ -514,33 +514,42 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setCurrentView('ai-insights')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
                       currentView === 'ai-insights'
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    🤖 AI Insights
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    AI Insights
                   </button>
                   <button
                     onClick={() => setCurrentView('ai-chat')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
                       currentView === 'ai-chat'
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    💬 Ask AI
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    Ask AI
                   </button>
                   <button
                     onClick={() => setCurrentView('compare')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
                       currentView === 'compare'
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    🔄 Compare
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Compare
                     {captures.length > 1 && (
                       <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">
                         {captures.length}

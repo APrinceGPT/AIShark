@@ -1,5 +1,6 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import { MessageSquare, Send, Trash2 } from 'lucide-react';
 
 interface ChatInterfaceProps {
   packets: Packet[];
