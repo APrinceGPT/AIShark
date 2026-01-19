@@ -20,23 +20,23 @@ export class PCAPParser {
     const data = new Uint8Array(buffer);
     const packets: Packet[] = [];
 
-    console.log('🔍 Parser: Buffer size:', buffer.byteLength);
-    console.log('🔍 Parser: First 16 bytes:', Array.from(data.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' '));
+    console.log('Parser: Buffer size:', buffer.byteLength);
+    console.log('Parser: First 16 bytes:', Array.from(data.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' '));
 
     // Check magic number to determine file type
     const magic = readUInt32BE(data, 0);
-    console.log('🔍 Parser: Magic number:', '0x' + magic.toString(16));
+    console.log('Parser: Magic number:', '0x' + magic.toString(16));
     
     if (magic === 0xa1b2c3d4 || magic === 0xd4c3b2a1) {
       // PCAP format
-      console.log('🔍 Parser: Detected PCAP format');
+      console.log('Parser: Detected PCAP format');
       return this.parsePCAP(data);
     } else if (magic === 0x0a0d0d0a) {
       // PCAPNG format
-      console.log('🔍 Parser: Detected PCAPNG format');
+      console.log('Parser: Detected PCAPNG format');
       return this.parsePCAPNG(data);
     } else {
-      console.error('🔍 Parser: Unknown magic number');
+      console.error('Parser: Unknown magic number');
       throw new Error(`Unsupported file format. Magic: 0x${magic.toString(16)}`);
     }
   }
@@ -89,7 +89,7 @@ export class PCAPParser {
     let packetId = 0;
     let tsResolution = 1000000; // Default: microseconds
 
-    console.log('🔍 PCAPNG Parser: Starting, data length:', data.length);
+    console.log('PCAPNG Parser: Starting, data length:', data.length);
 
     while (offset < data.length - 12) {
       try {
@@ -98,22 +98,22 @@ export class PCAPParser {
         const blockLength = this.readUInt32LE(data, offset + 4);
 
         if (offset % 100000 === 0) {
-          console.log(`🔍 PCAPNG: Offset ${offset}, BlockType: 0x${blockType.toString(16)}, Length: ${blockLength}`);
+          console.log(`PCAPNG: Offset ${offset}, BlockType: 0x${blockType.toString(16)}, Length: ${blockLength}`);
         }
 
         if (blockLength < 12 || offset + blockLength > data.length) {
-          console.log('🔍 PCAPNG: Invalid block length, stopping. BlockLength:', blockLength, 'Remaining:', data.length - offset);
+          console.log('PCAPNG: Invalid block length, stopping. BlockLength:', blockLength, 'Remaining:', data.length - offset);
           break;
         }
 
         if (blockType === 0x0a0d0d0a) {
           // Section Header Block (SHB)
-          console.log('🔍 PCAPNG: Section Header Block');
+          console.log('PCAPNG: Section Header Block');
         } else if (blockType === 0x00000001) {
           // Interface Description Block
           const linkType = data[offset + 8] | (data[offset + 9] << 8);
           this.linkType = linkType;
-          console.log('🔍 PCAPNG: Interface Description Block, linkType:', linkType);
+          console.log('PCAPNG: Interface Description Block, linkType:', linkType);
         } else if (blockType === 0x00000006) {
           // Enhanced Packet Block
           const timestampHigh = this.readUInt32LE(data, offset + 12);
@@ -137,7 +137,7 @@ export class PCAPParser {
       }
     }
 
-    console.log('🔍 PCAPNG Parser: Finished. Total packets:', packets.length);
+    console.log('PCAPNG Parser: Finished. Total packets:', packets.length);
     return packets;
   }
 
