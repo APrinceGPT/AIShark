@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
 
 interface Capture {
@@ -82,7 +83,10 @@ export default function CompareCaptures({ captures }: CompareProps) {
     <div className="space-y-6">
       {/* Capture Selection */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">🔄 Compare Captures</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <RefreshCw className="w-6 h-6 text-blue-600" />
+          Compare Captures
+        </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Before Capture */}
