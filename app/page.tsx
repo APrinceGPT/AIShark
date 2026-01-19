@@ -11,6 +11,7 @@ import ExportTools from '@/components/ExportTools';
 import AIInsights from '@/components/AIInsights';
 import ChatInterface from '@/components/ChatInterface';
 import CompareCaptures from '@/components/CompareCaptures';
+import { toast } from '@/components/ToastContainer';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { enhancePackets, calculateStatistics, performAnalysis } from '@/lib/analyzer';
 
@@ -175,7 +176,7 @@ export default function Home() {
         } else if (type === 'error') {
           console.error('Worker error:', event.data.error);
           console.groupEnd();
-          alert(`Error parsing file: ${event.data.error}`);
+          toast.error(`Error parsing file: ${event.data.error}`);
           setIsProcessing(false);
           
           if (workerRef.current) {
@@ -190,7 +191,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error processing file:', error);
       console.groupEnd();
-      alert('Error processing file. Please ensure it is a valid PCAP/PCAPNG file.');
+      toast.error('Error processing file. Please ensure it is a valid PCAP/PCAPNG file.');
       setIsProcessing(false);
     }
   }, []);
@@ -596,6 +597,7 @@ export default function Home() {
                   packets={allPackets}
                   statistics={statistics}
                   analysis={analysis}
+                  onPacketClick={handlePacketClick}
                 />
               </div>
             )}
@@ -606,6 +608,7 @@ export default function Home() {
                   packets={allPackets}
                   statistics={statistics}
                   analysis={analysis}
+                  onPacketClick={handlePacketClick}
                 />
               </div>
             )}
