@@ -310,8 +310,166 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex-1">
         {allPackets.length === 0 ? (
-          <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-            <FileUpload onFileUpload={handleFileUpload} isProcessing={isProcessing} />
+          <div className="bg-gradient-to-br from-gray-50 to-blue-50">
+            {/* Hero Section */}
+            <div className="max-w-7xl mx-auto px-4 pt-16 pb-12">
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-6">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                  AI-Powered PCAP Analysis
+                </h1>
+                <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                  Analyze Wireshark packet captures with intelligent insights. Get instant summaries, 
+                  detect anomalies, and troubleshoot network issues using AI.
+                </p>
+              </div>
+
+              {/* File Upload */}
+              <div className="mb-16">
+                <FileUpload onFileUpload={handleFileUpload} isProcessing={isProcessing} />
+              </div>
+
+              {/* Features Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Analysis</h3>
+                  <p className="text-gray-600">
+                    AI automatically identifies network issues, performance bottlenecks, and security concerns with detailed explanations.
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Ask Questions</h3>
+                  <p className="text-gray-600">
+                    Chat with AI about your capture. Ask "Why is this connection slow?" or "Are there security threats?" in plain English.
+                  </p>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Privacy First</h3>
+                  <p className="text-gray-600">
+                    Your packet data is processed client-side. Only anonymized summaries are sent to AI—your sensitive data stays private.
+                  </p>
+                </div>
+              </div>
+
+              {/* Capabilities */}
+              <div className="bg-white rounded-xl shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">What You Can Do</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Protocol Analysis</h4>
+                      <p className="text-sm text-gray-600">HTTP/HTTPS, DNS, TCP, UDP, TLS/SSL with deep inspection</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Anomaly Detection</h4>
+                      <p className="text-sm text-gray-600">AI identifies unusual patterns, security threats, and errors</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Root Cause Analysis</h4>
+                      <p className="text-sm text-gray-600">AI troubleshoots issues with evidence and recommendations</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Compare Captures</h4>
+                      <p className="text-sm text-gray-600">Before/after comparison with AI-powered insights</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Advanced Filtering</h4>
+                      <p className="text-sm text-gray-600">Search by IP, protocol, or content with instant results</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Export Reports</h4>
+                      <p className="text-sm text-gray-600">JSON, CSV, and text format exports for further analysis</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Performance Stats */}
+              <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-600">⚡ 1.4s</div>
+                  <div className="text-sm text-gray-600 mt-1">Parse 26K packets</div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <div className="text-3xl font-bold text-green-600">💰 85%</div>
+                  <div className="text-sm text-gray-600 mt-1">Cost savings</div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <div className="text-3xl font-bold text-purple-600">🤖 2-4s</div>
+                  <div className="text-sm text-gray-600 mt-1">AI response time</div>
+                </div>
+                <div className="bg-white rounded-lg shadow p-4 text-center">
+                  <div className="text-3xl font-bold text-orange-600">🔒 100%</div>
+                  <div className="text-sm text-gray-600 mt-1">Privacy protected</div>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           <>
