@@ -23,10 +23,26 @@ export default function AIInsights({ packets, statistics, analysis }: AIInsights
     setError('');
 
     try {
+      // Send only essential data to avoid payload size limits
+      const optimizedPackets = packets.slice(0, 50).map(p => ({
+        id: p.id,
+        timestamp: p.timestamp,
+        protocol: p.protocol,
+        source: p.source,
+        destination: p.destination,
+        length: p.length,
+        info: p.info,
+      }));
+
       const response = await fetch('/api/analyze/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics, analysis }),
+        body: JSON.stringify({ 
+          packets: optimizedPackets,
+          packetCount: packets.length,
+          statistics, 
+          analysis 
+        }),
       });
 
       const data = await response.json();
@@ -53,10 +69,26 @@ export default function AIInsights({ packets, statistics, analysis }: AIInsights
     setError('');
 
     try {
+      // Send only essential data to avoid payload size limits
+      const optimizedPackets = packets.slice(0, 50).map(p => ({
+        id: p.id,
+        timestamp: p.timestamp,
+        protocol: p.protocol,
+        source: p.source,
+        destination: p.destination,
+        length: p.length,
+        info: p.info,
+      }));
+
       const response = await fetch('/api/analyze/anomaly', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics, analysis }),
+        body: JSON.stringify({ 
+          packets: optimizedPackets,
+          packetCount: packets.length,
+          statistics, 
+          analysis 
+        }),
       });
 
       const data = await response.json();
