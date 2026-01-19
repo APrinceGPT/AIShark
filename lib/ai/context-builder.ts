@@ -90,9 +90,8 @@ function extractTopEndpoints(packets: Packet[], limit: number): string[] {
   const endpointCounts = new Map<string, number>();
   
   packets.forEach(packet => {
-    const ip = packet.layers.ip;
-    if (ip) {
-      const key = `${ip.source} ↔ ${ip.destination}`;
+    if (packet.source && packet.destination) {
+      const key = `${packet.source} ↔ ${packet.destination}`;
       endpointCounts.set(key, (endpointCounts.get(key) || 0) + 1);
     }
   });
