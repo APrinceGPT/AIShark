@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ToastContainer from "@/components/ToastContainer";
 
 export const metadata: Metadata = {
   title: "AIShark - PCAP Analyzer",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased bg-gray-50">
         {children}
+        <ToastContainer />
       </body>
     </html>
   );

@@ -1,11 +1,15 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { MessageSquare, Send, Trash2 } from 'lucide-react';
+import { aiCache } from '@/lib/ai-cache';
+import { toast } from './ToastContainer';
+import FormattedAIResponse from './FormattedAIResponse';
 
 interface ChatInterfaceProps {
   packets: Packet[];
   statistics: PacketStatistics | null;
   analysis: AnalysisResult | null;
+  onPacketClick?: (packetId: number) => void;
 }
 
 interface Message {
@@ -14,7 +18,7 @@ interface Message {
   timestamp: number;
 }
 
-export default function ChatInterface({ packets, statistics, analysis }: ChatInterfaceProps) {
+export default function ChatInterface({ packets, statistics, analysis, onPacketClick }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,15 +42,32 @@ export default function ChatInterface({ packets, statistics, analysis }: ChatInt
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const question = input;
     setInput('');
     setLoading(true);
 
     try {
+      // Check cache first
+      const cacheKey = { question, packets: packets.length, statistics, analysis };
+      const cached = aiCache.get('/api/analyze/query', cacheKey);
+      
+      if (cached) {
+        const assistantMessage: Message = {
+          role: 'assistant',
+          content: cached.answer,
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        toast.info('Loaded from cache');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('/api/analyze/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: input,
+          question,
           packets,
           statistics,
           analysis,
@@ -62,6 +83,7 @@ export default function ChatInterface({ packets, statistics, analysis }: ChatInt
           timestamp: Date.now(),
         };
         setMessages(prev => [...prev, assistantMessage]);
+        aiCache.set('/api/analyze/query', cacheKey, data);
       } else {
         const errorMessage: Message = {
           role: 'assistant',
@@ -69,6 +91,7 @@ export default function ChatInterface({ packets, statistics, analysis }: ChatInt
           timestamp: Date.now(),
         };
         setMessages(prev => [...prev, errorMessage]);
+        toast.error(data.error);
       }
     } catch (err) {
       const errorMessage: Message = {
@@ -77,6 +100,7 @@ export default function ChatInterface({ packets, statistics, analysis }: ChatInt
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errorMessage]);
+      toast.error('Network error: Failed to get response');
     } finally {
       setLoading(false);
     }
@@ -150,7 +174,11 @@ export default function ChatInterface({ packets, statistics, analysis }: ChatInt
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              {msg.role === 'assistant' && onPacketClick ? (
+                <FormattedAIResponse text={msg.content} onPacketClick={onPacketClick} />
+              ) : (
+                <p className="whitespace-pre-wrap">{msg.content}</p>
+              )}
               <p className="text-xs mt-1 opacity-70">
                 {new Date(msg.timestamp).toLocaleTimeString()}
               </p>
