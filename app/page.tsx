@@ -10,6 +10,7 @@ import AnalysisReport from '@/components/AnalysisReport';
 import ExportTools from '@/components/ExportTools';
 import AIInsights from '@/components/AIInsights';
 import ChatInterface from '@/components/ChatInterface';
+import CompareCaptures from '@/components/CompareCaptures';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { enhancePackets, calculateStatistics, performAnalysis } from '@/lib/analyzer';
 
@@ -20,8 +21,17 @@ export default function Home() {
   const [statistics, setStatistics] = useState<PacketStatistics | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentView, setCurrentView] = useState<'packets' | 'statistics' | 'analysis' | 'ai-insights' | 'ai-chat'>('packets');
+  const [currentView, setCurrentView] = useState<'packets' | 'statistics' | 'analysis' | 'ai-insights' | 'ai-chat' | 'compare'>('packets');
   const [protocolCounts, setProtocolCounts] = useState<Record<string, number>>({});
+  
+  // Multi-capture state for comparison
+  const [captures, setCaptures] = useState<Array<{
+    name: string;
+    packets: Packet[];
+    statistics: PacketStatistics;
+    analysis: AnalysisResult;
+    timestamp: number;
+  }>>([]);
   
   const workerRef = useRef<Worker | null>(null);
 
@@ -142,6 +152,17 @@ export default function Home() {
           });
           setProtocolCounts(counts);
 
+          // Save to captures history for comparison
+          if (stats && analysisResult) {
+            setCaptures(prev => [...prev, {
+              name: file.name,
+              packets: enhanced,
+              statistics: stats,
+              analysis: analysisResult,
+              timestamp: Date.now(),
+            }]);
+          }
+
           const totalTime = performance.now() - parseStartTime;
           console.log(`🎉 Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
           console.groupEnd();
@@ -172,6 +193,17 @@ export default function Home() {
       alert('Error processing file. Please ensure it is a valid PCAP/PCAPNG file.');
       setIsProcessing(false);
     }
+  }, []);
+
+  const handleNewUpload = useCallback(() => {
+    // Reset to upload screen
+    setAllPackets([]);
+    setFilteredPackets([]);
+    setSelectedPacket(null);
+    setStatistics(null);
+    setAnalysis(null);
+    setProtocolCounts({});
+    setCurrentView('packets');
   }, []);
 
   const handleFilterChange = useCallback((filter: PacketFilter) => {
@@ -257,6 +289,15 @@ export default function Home() {
           
           {allPackets.length > 0 && (
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleNewUpload}
+                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Upload New File
+              </button>
               <ExportTools 
                 packets={filteredPackets} 
                 selectedPacketIds={selectedPacket ? [selectedPacket.id] : []}
@@ -333,6 +374,21 @@ export default function Home() {
                   >
                     💬 Ask AI
                   </button>
+                  <button
+                    onClick={() => setCurrentView('compare')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      currentView === 'compare'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    🔄 Compare
+                    {captures.length > 1 && (
+                      <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">
+                        {captures.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
@@ -384,6 +440,12 @@ export default function Home() {
                   statistics={statistics}
                   analysis={analysis}
                 />
+              </div>
+            )}
+
+            {currentView === 'compare' && (
+              <div className="max-w-7xl mx-auto px-4 py-6">
+                <CompareCaptures captures={captures} />
               </div>
             )}
           </>
