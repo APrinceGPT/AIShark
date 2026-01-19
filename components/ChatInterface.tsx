@@ -1,6 +1,5 @@
 ﻿import { useState, useRef, useEffect } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
-import { querySample } from '@/lib/client-sampler';
 
 interface ChatInterfaceProps {
   packets: Packet[];
@@ -42,17 +41,12 @@ export default function ChatInterface({ packets, statistics, analysis }: ChatInt
     setLoading(true);
 
     try {
-      // Use query-aware sampling: finds relevant packets based on keywords
-      // E.g., "facebook" query will find facebook.com packets even if they're at packet 15000
-      const sampledPackets = querySample(packets, input, 150);
-      
       const response = await fetch('/api/analyze/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: input,
-          packets: sampledPackets,
-          packetCount: packets.length,
+          packets,
           statistics,
           analysis,
         }),
