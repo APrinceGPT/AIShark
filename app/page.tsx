@@ -8,6 +8,8 @@ import PacketDetails from '@/components/PacketDetails';
 import Statistics from '@/components/Statistics';
 import AnalysisReport from '@/components/AnalysisReport';
 import ExportTools from '@/components/ExportTools';
+import AIInsights from '@/components/AIInsights';
+import ChatInterface from '@/components/ChatInterface';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { enhancePackets, calculateStatistics, performAnalysis } from '@/lib/analyzer';
 
@@ -18,7 +20,7 @@ export default function Home() {
   const [statistics, setStatistics] = useState<PacketStatistics | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentView, setCurrentView] = useState<'packets' | 'statistics' | 'analysis'>('packets');
+  const [currentView, setCurrentView] = useState<'packets' | 'statistics' | 'analysis' | 'ai-insights' | 'ai-chat'>('packets');
   const [protocolCounts, setProtocolCounts] = useState<Record<string, number>>({});
   
   const workerRef = useRef<Worker | null>(null);
@@ -311,6 +313,26 @@ export default function Home() {
                       </span>
                     )}
                   </button>
+                  <button
+                    onClick={() => setCurrentView('ai-insights')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      currentView === 'ai-insights'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    🤖 AI Insights
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('ai-chat')}
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      currentView === 'ai-chat'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    💬 Ask AI
+                  </button>
                 </div>
               </div>
             </div>
@@ -341,6 +363,26 @@ export default function Home() {
                 <AnalysisReport 
                   analysis={analysis}
                   onPacketClick={handlePacketClick}
+                />
+              </div>
+            )}
+
+            {currentView === 'ai-insights' && (
+              <div className="max-w-7xl mx-auto px-4 py-6">
+                <AIInsights
+                  packets={allPackets}
+                  statistics={statistics}
+                  analysis={analysis}
+                />
+              </div>
+            )}
+
+            {currentView === 'ai-chat' && (
+              <div className="max-w-7xl mx-auto px-4 py-6">
+                <ChatInterface
+                  packets={allPackets}
+                  statistics={statistics}
+                  analysis={analysis}
                 />
               </div>
             )}
