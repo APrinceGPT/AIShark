@@ -41,12 +41,24 @@ export default function ChatInterface({ packets, statistics, analysis }: ChatInt
     setLoading(true);
 
     try {
+      // Send only essential data to avoid payload size limits
+      const optimizedPackets = packets.slice(0, 50).map(p => ({
+        id: p.id,
+        timestamp: p.timestamp,
+        protocol: p.protocol,
+        source: p.source,
+        destination: p.destination,
+        length: p.length,
+        info: p.info,
+      }));
+
       const response = await fetch('/api/analyze/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question: input,
-          packets,
+          packets: optimizedPackets,
+          packetCount: packets.length,
           statistics,
           analysis,
         }),
