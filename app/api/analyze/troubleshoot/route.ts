@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prepareAnalysisContext } from '@/lib/ai/context-builder';
+import { 
+  prepareOptimizedContext, 
+  validateContextSize 
+} from '@/lib/ai/context-builder';
 import { TROUBLESHOOT_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
@@ -37,8 +40,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare full context (troubleshooting needs complete data)
-    const fullContext = prepareAnalysisContext(packets, statistics, analysis);
+    // Prepare full context (troubleshooting needs more complete data)
+    const { context: fullContext, metrics } = prepareOptimizedContext(
+      packets, 
+      statistics, 
+      analysis,
+      5000 // Higher budget for troubleshooting
+    );
+    
+    // Validate context size
+    const validation = validateContextSize(fullContext);
+    if (!validation.valid) {
+      console.warn('Context validation failed:', validation.warning);
+      return NextResponse.json(
+        { error: validation.warning },
+        { status: 400 }
+      );
+    }
+
+    console.log(`Troubleshoot context: ${metrics.estimatedTokens} tokens for problem: "${problem}"`);
 
     // Generate troubleshooting analysis
     const troubleshootAnalysis = await getCompletion(
@@ -54,6 +74,9 @@ export async function POST(request: NextRequest) {
       problem,
       analysis: troubleshootAnalysis,
       timestamp: Date.now(),
+      metrics: {
+        tokens: metrics.estimatedTokens,
+      },
     });
 
   } catch (error) {

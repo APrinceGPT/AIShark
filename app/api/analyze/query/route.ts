@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prepareAnalysisContext, optimizeContextForQuery } from '@/lib/ai/context-builder';
+import { 
+  prepareOptimizedContext, 
+  validateContextSize,
+  optimizeContextForQuery 
+} from '@/lib/ai/context-builder';
 import { QUERY_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
@@ -37,9 +41,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare and optimize context
-    const fullContext = prepareAnalysisContext(packets, statistics, analysis);
+    // Prepare optimized context
+    const { context: fullContext, metrics } = prepareOptimizedContext(
+      packets, 
+      statistics, 
+      analysis,
+      3500 // Lower for queries to leave room for question
+    );
+    
     const optimizedContext = optimizeContextForQuery(fullContext, 'query');
+    
+    // Validate context size
+    const validation = validateContextSize(optimizedContext);
+    if (!validation.valid) {
+      console.warn('Context validation failed:', validation.warning);
+      return NextResponse.json(
+        { error: validation.warning },
+        { status: 400 }
+      );
+    }
+
+    console.log(`Query context: ${metrics.estimatedTokens} tokens for question: "${question}"`);
 
     // Generate answer
     const answer = await getCompletion(
@@ -55,6 +77,9 @@ export async function POST(request: NextRequest) {
       question,
       answer,
       timestamp: Date.now(),
+      metrics: {
+        tokens: metrics.estimatedTokens,
+      },
     });
 
   } catch (error) {
