@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prepareAnalysisContext, optimizeContextForQuery } from '@/lib/ai/context-builder';
+import { 
+  prepareOptimizedContext, 
+  validateContextSize,
+  optimizeContextForQuery 
+} from '@/lib/ai/context-builder';
 import { SUMMARY_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
@@ -29,9 +33,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare and optimize context
-    const fullContext = prepareAnalysisContext(packets, statistics, analysis);
+    // Prepare optimized context with token budget
+    const { context: fullContext, metrics } = prepareOptimizedContext(
+      packets, 
+      statistics, 
+      analysis,
+      4000 // Max tokens for summary
+    );
+    
     const optimizedContext = optimizeContextForQuery(fullContext, 'summary');
+    
+    // Validate context size
+    const validation = validateContextSize(optimizedContext);
+    if (!validation.valid) {
+      console.warn('Context validation failed:', validation.warning);
+      return NextResponse.json(
+        { error: validation.warning },
+        { status: 400 }
+      );
+    }
+
+    console.log(`Context metrics: ${metrics.estimatedTokens} tokens, compression ${metrics.compressionRatio.toFixed(1)}x`);
 
     // Generate AI summary
     const summary = await getCompletion(
@@ -43,6 +65,12 @@ export async function POST(request: NextRequest) {
       success: true,
       summary,
       timestamp: Date.now(),
+      metrics: {
+        tokens: metrics.estimatedTokens,
+        packets: metrics.packetCount,
+        samplingRate: metrics.samplingRate.toFixed(3),
+        compression: `${metrics.compressionRatio.toFixed(1)}x`,
+      },
     });
 
   } catch (error) {

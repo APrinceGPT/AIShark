@@ -6,12 +6,18 @@ import { bytesToString } from '@/lib/utils';
 import { addAnnotation, getAnnotations, updateAnnotation, deleteAnnotation } from '@/lib/annotation-manager';
 import { PacketAnnotation } from '@/types/database';
 import { toast } from './ToastContainer';
-import { MessageSquare, Save, X, AlertCircle, Info } from 'lucide-react';
+import { MessageSquare, Save, X, AlertCircle, Info, Sparkles } from 'lucide-react';
 
 interface PacketDetailsProps {
   packet: Packet | null;
   onClose: () => void;
   sessionId?: string;
+}
+
+interface AISuggestion {
+  annotation: string;
+  severity: 'info' | 'warning' | 'critical';
+  reason: string;
 }
 
 export default function PacketDetails({ packet, onClose, sessionId }: PacketDetailsProps) {
@@ -21,6 +27,8 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
   const [annotationSeverity, setAnnotationSeverity] = useState<'info' | 'warning' | 'critical'>('info');
   const [editingAnnotation, setEditingAnnotation] = useState<PacketAnnotation | null>(null);
   const [loadingAnnotations, setLoadingAnnotations] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
   useEffect(() => {
     if (packet && sessionId) {
@@ -96,6 +104,52 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
     setAnnotationText(annotation.annotation || '');
     setAnnotationSeverity(annotation.severity);
     setShowAnnotationForm(true);
+    setAiSuggestion(null); // Clear AI suggestion when editing
+  };
+
+  const handleGetAISuggestion = async () => {
+    if (!packet) return;
+    
+    setLoadingSuggestion(true);
+    setAiSuggestion(null);
+    
+    try {
+      const response = await fetch('/api/analyze/suggest-annotation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ packet }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI suggestion');
+      }
+
+      const suggestion: AISuggestion = await response.json();
+      setAiSuggestion(suggestion);
+      
+      // Auto-fill the form with suggestion
+      setAnnotationText(suggestion.annotation);
+      setAnnotationSeverity(suggestion.severity);
+      setShowAnnotationForm(true);
+      
+      toast.success('AI suggestion ready!');
+    } catch (error) {
+      console.error('AI suggestion error:', error);
+      toast.error('Failed to get AI suggestion');
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  };
+
+  const handleAcceptSuggestion = () => {
+    if (!aiSuggestion) return;
+    setAnnotationText(aiSuggestion.annotation);
+    setAnnotationSeverity(aiSuggestion.severity);
+    setShowAnnotationForm(true);
+  };
+
+  const handleDismissSuggestion = () => {
+    setAiSuggestion(null);
   };
 
   if (!packet) return null;
@@ -305,18 +359,79 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
                   <MessageSquare className="w-5 h-5" />
                   Annotations
                 </h3>
-                <button
-                  onClick={() => setShowAnnotationForm(!showAnnotationForm)}
-                  className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-1"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Add Note
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleGetAISuggestion}
+                    disabled={loadingSuggestion}
+                    className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    {loadingSuggestion ? 'Thinking...' : 'AI Suggest'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAnnotationForm(!showAnnotationForm);
+                      setAiSuggestion(null);
+                    }}
+                    className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-1"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Add Note
+                  </button>
+                </div>
               </div>
+
+              {/* AI Suggestion Banner */}
+              {aiSuggestion && !showAnnotationForm && (
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4 mb-3">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm text-purple-900 mb-1">AI Suggestion</div>
+                      <div className="text-sm text-gray-800 mb-2">"{aiSuggestion.annotation}"</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          aiSuggestion.severity === 'critical' 
+                            ? 'bg-red-100 text-red-800' 
+                            : aiSuggestion.severity === 'warning'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {aiSuggestion.severity.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-gray-600">{aiSuggestion.reason}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleAcceptSuggestion}
+                          className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-xs"
+                        >
+                          Use This
+                        </button>
+                        <button
+                          onClick={handleDismissSuggestion}
+                          className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Annotation Form */}
               {showAnnotationForm && (
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                  {aiSuggestion && (
+                    <div className="bg-purple-50 border border-purple-200 rounded p-2 mb-3 text-xs">
+                      <div className="flex items-center gap-1 text-purple-700 mb-1">
+                        <Sparkles className="w-3 h-3" />
+                        <span className="font-medium">AI suggested this annotation</span>
+                      </div>
+                      <div className="text-gray-600">{aiSuggestion.reason}</div>
+                    </div>
+                  )}
                   <textarea
                     value={annotationText}
                     onChange={(e) => setAnnotationText(e.target.value)}

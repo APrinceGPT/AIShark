@@ -15,6 +15,8 @@ import AuthModal from '@/components/AuthModal';
 import UserProfile from '@/components/UserProfile';
 import SaveSessionModal from '@/components/SaveSessionModal';
 import AnalysisHistory from '@/components/AnalysisHistory';
+import AIPacketAssistant from '@/components/AIPacketAssistant';
+import AISemanticSearch from '@/components/AISemanticSearch';
 import { toast } from '@/components/ToastContainer';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { calculateStatistics, performAnalysis } from '@/lib/analyzer';
@@ -45,9 +47,14 @@ export default function Home() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [enableAIAssistant, setEnableAIAssistant] = useState(true);
   const [currentSession, setCurrentSession] = useState<SessionData>({ isFromDatabase: false });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // AI Semantic Search state
+  const [aiSearchActive, setAiSearchActive] = useState(false);
+  const [aiSearchPacketIds, setAiSearchPacketIds] = useState<number[]>([]);
   
   // Multi-capture state for comparison
   const [captures, setCaptures] = useState<Array<{
@@ -389,6 +396,26 @@ export default function Home() {
     setFilteredPackets(filtered);
   }, [allPackets]);
 
+  const handleAISearchResults = useCallback((packetIds: number[], explanation: string) => {
+    console.log(`AI Search: Found ${packetIds.length} matching packets`);
+    console.log('Explanation:', explanation);
+    
+    setAiSearchActive(true);
+    setAiSearchPacketIds(packetIds);
+    
+    // Filter packets to only show AI search results
+    const matchingPackets = allPackets.filter(p => packetIds.includes(p.id));
+    setFilteredPackets(matchingPackets);
+  }, [allPackets]);
+
+  const handleClearAISearch = useCallback(() => {
+    console.log('AI Search cleared');
+    setAiSearchActive(false);
+    setAiSearchPacketIds([]);
+    // Reset to show all packets (or apply existing filters)
+    setFilteredPackets(allPackets);
+  }, [allPackets]);
+
   const handlePacketClick = useCallback((packetId: number) => {
     const packet = allPackets.find(p => p.id === packetId);
     if (packet) {
@@ -431,6 +458,20 @@ export default function Home() {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setEnableAIAssistant(!enableAIAssistant)}
+                className={`p-2 rounded-lg transition-colors ${
+                  enableAIAssistant
+                    ? 'bg-yellow-400 text-white hover:bg-yellow-500'
+                    : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+                }`}
+                aria-label="Toggle AI Packet Assistant"
+                title={`AI Packet Assistant ${enableAIAssistant ? 'On' : 'Off'}`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </button>
               {user && !currentSession.isFromDatabase && (
@@ -723,6 +764,11 @@ export default function Home() {
             {/* Content Area */}
             {currentView === 'packets' && (
               <>
+                <AISemanticSearch
+                  allPackets={allPackets}
+                  onSearchResults={handleAISearchResults}
+                  onClearSearch={handleClearAISearch}
+                />
                 <FilterBar 
                   ref={searchInputRef}
                   onFilterChange={handleFilterChange}
@@ -829,6 +875,14 @@ export default function Home() {
         isOpen={showShortcutsModal}
         onClose={() => setShowShortcutsModal(false)}
       />
+
+      {/* AI Packet Assistant - Floating Panel */}
+      {enableAIAssistant && selectedPacket && allPackets.length > 0 && (
+        <AIPacketAssistant
+          selectedPacket={selectedPacket}
+          allPackets={allPackets}
+        />
+      )}
     </main>
   );
 }

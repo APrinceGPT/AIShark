@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prepareAnalysisContext, optimizeContextForQuery } from '@/lib/ai/context-builder';
+import { 
+  prepareOptimizedContext, 
+  validateContextSize,
+  optimizeContextForQuery 
+} from '@/lib/ai/context-builder';
 import { ANOMALY_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
@@ -29,9 +33,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare and optimize context for anomaly detection
-    const fullContext = prepareAnalysisContext(packets, statistics, analysis);
+    // Prepare optimized context for anomaly detection
+    const { context: fullContext, metrics } = prepareOptimizedContext(
+      packets, 
+      statistics, 
+      analysis,
+      4500 // Slightly higher for error packets
+    );
+    
     const optimizedContext = optimizeContextForQuery(fullContext, 'anomaly');
+    
+    // Validate context size
+    const validation = validateContextSize(optimizedContext);
+    if (!validation.valid) {
+      console.warn('Context validation failed:', validation.warning);
+      return NextResponse.json(
+        { error: validation.warning },
+        { status: 400 }
+      );
+    }
+
+    console.log(`Anomaly context: ${metrics.estimatedTokens} tokens, ${fullContext.errorPackets.length} error packets`);
 
     // Generate anomaly analysis
     const anomalyAnalysis = await getCompletion(
@@ -43,6 +65,10 @@ export async function POST(request: NextRequest) {
       success: true,
       analysis: anomalyAnalysis,
       timestamp: Date.now(),
+      metrics: {
+        tokens: metrics.estimatedTokens,
+        errorPackets: fullContext.errorPackets.length,
+      },
     });
 
   } catch (error) {
