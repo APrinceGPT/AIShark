@@ -1,5 +1,6 @@
 import { PCAPParser } from '../lib/pcap-parser';
 import { Packet } from '../types/packet';
+import { enhancePackets } from '../lib/analyzer';
 
 let parser: PCAPParser | null = null;
 
@@ -22,12 +23,17 @@ self.addEventListener('message', async (event: MessageEvent) => {
         console.log('Worker: Parse returned', packets.length, 'packets');
         
         // Send packets in chunks to avoid blocking
+        // Enhance packets in worker for better performance
         const chunkSize = 1000;
         for (let i = 0; i < packets.length; i += chunkSize) {
           const chunk = packets.slice(i, i + chunkSize);
+          
+          // Enhance chunk before sending to main thread
+          const enhancedChunk = enhancePackets(chunk);
+          
           self.postMessage({
             type: 'progress',
-            packets: chunk,
+            packets: enhancedChunk,
             total: packets.length,
             current: i + chunk.length,
           });

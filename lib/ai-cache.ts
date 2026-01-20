@@ -67,6 +67,29 @@ class AICache {
       entries: Array.from(this.cache.keys()),
     };
   }
+
+  /**
+   * Get all cached AI responses for saving to database
+   * Returns array of {endpoint, response} objects
+   */
+  getAllCachedInsights(): Array<{endpoint: string; data: any}> {
+    const insights: Array<{endpoint: string; data: any}> = [];
+    
+    this.cache.forEach((entry, key) => {
+      // Extract endpoint from key (format: "endpoint:params")
+      const endpoint = key.split(':')[0];
+      
+      // Only include AI analysis endpoints
+      if (endpoint.includes('/api/analyze/')) {
+        insights.push({
+          endpoint,
+          data: entry.response,
+        });
+      }
+    });
+    
+    return insights;
+  }
 }
 
 // Singleton instance

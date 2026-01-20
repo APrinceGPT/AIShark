@@ -316,3 +316,78 @@ export async function saveAIInsight(
     return false;
   }
 }
+
+/**
+ * Save multiple AI insights from cache
+ */
+export async function saveCachedInsights(
+  sessionId: string,
+  cachedInsights: Array<{endpoint: string; data: any}>
+): Promise<{success: boolean; saved: number; failed: number}> {
+  if (!supabase) {
+    return { success: false, saved: 0, failed: 0 };
+  }
+
+  let saved = 0;
+  let failed = 0;
+
+  for (const insight of cachedInsights) {
+    try {
+      let type: 'summary' | 'anomaly' | 'chat';
+      let response: string;
+      let question: string | undefined;
+
+      // Determine type from endpoint
+      if (insight.endpoint.includes('/summary')) {
+        type = 'summary';
+        response = insight.data.summary || '';
+      } else if (insight.endpoint.includes('/anomaly')) {
+        type = 'anomaly';
+        response = insight.data.analysis || '';
+      } else if (insight.endpoint.includes('/query')) {
+        type = 'chat';
+        response = insight.data.answer || '';
+        question = insight.data.question;
+      } else {
+        continue; // Skip unknown types
+      }
+
+      const result = await saveAIInsight(sessionId, type, response, question);
+      if (result) {
+        saved++;
+      } else {
+        failed++;
+      }
+    } catch (error) {
+      console.error('Error saving cached insight:', error);
+      failed++;
+    }
+  }
+
+  return { success: saved > 0, saved, failed };
+}
+
+/**
+ * Download PCAP file from storage
+ */
+export async function downloadSessionFile(filePath: string): Promise<Blob | null> {
+  if (!supabase) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase.storage
+      .from('pcap-files')
+      .download(filePath);
+
+    if (error) {
+      console.error('File download error:', error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('File download error:', error);
+    return null;
+  }
+}

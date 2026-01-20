@@ -17,10 +17,12 @@ import SaveSessionModal from '@/components/SaveSessionModal';
 import AnalysisHistory from '@/components/AnalysisHistory';
 import { toast } from '@/components/ToastContainer';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
-import { enhancePackets, calculateStatistics, performAnalysis } from '@/lib/analyzer';
+import { calculateStatistics, performAnalysis } from '@/lib/analyzer';
 import { useAuth } from '@/lib/auth-context';
 import { loadSession } from '@/lib/session-manager';
 import { Save, History, LogIn } from 'lucide-react';
+import { useKeyboardShortcuts } from '@/lib/use-keyboard-shortcuts';
+import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal';
 
 interface SessionData {
   sessionId?: string;
@@ -42,8 +44,10 @@ export default function Home() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [currentSession, setCurrentSession] = useState<SessionData>({ isFromDatabase: false });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   
   // Multi-capture state for comparison
   const [captures, setCaptures] = useState<Array<{
@@ -106,26 +110,23 @@ export default function Home() {
         const { type, packets: chunk, total, current } = event.data;
 
         if (type === 'progress') {
+          // Packets are already enhanced by worker
           packets.push(...chunk);
           
           // Update UI periodically
           if (packets.length % 1000 === 0 || packets.length === total) {
-            const enhanceStart = performance.now();
-            const enhanced = enhancePackets([...packets]);
-            const enhanceTime = performance.now() - enhanceStart;
-            
             if (process.env.NODE_ENV === 'development') {
               console.log(`Progress: ${current}/${total} packets (${((current/total)*100).toFixed(1)}%)`);
-              console.log('Enhancing packets with protocol analysis...');
-              console.log(`Enhanced ${enhanced.length} packets in ${enhanceTime.toFixed(2)}ms`);
+              console.log('Packets received (pre-enhanced by worker)');
             }
             
-            setAllPackets(enhanced);
-            setFilteredPackets(enhanced);
+            // Set packets directly - already enhanced by worker
+            setAllPackets([...packets]);
+            setFilteredPackets([...packets]);
             
             // Calculate protocol counts
             const counts: Record<string, number> = {};
-            enhanced.forEach(p => {
+            packets.forEach(p => {
               counts[p.protocol] = (counts[p.protocol] || 0) + 1;
             });
             setProtocolCounts(counts);
@@ -136,15 +137,16 @@ export default function Home() {
           if (process.env.NODE_ENV === 'development') {
             console.log(`Parsing complete in ${parseTime.toFixed(2)}ms`);
             console.log(`Total packets parsed: ${packets.length}`);
-            console.log('Final enhancement pass...');
+            console.log('All packets pre-enhanced by worker');
           }
-          const enhanced = enhancePackets(packets);
-          setAllPackets(enhanced);
-          setFilteredPackets(enhanced);
+          
+          // Packets already enhanced by worker - just set state
+          setAllPackets([...packets]);
+          setFilteredPackets([...packets]);
           
           // Calculate statistics and perform analysis
           const statsStart = performance.now();
-          const stats = calculateStatistics(enhanced);
+          const stats = calculateStatistics(packets);
           const statsTime = performance.now() - statsStart;
           
           if (process.env.NODE_ENV === 'development') {
@@ -160,7 +162,7 @@ export default function Home() {
           setStatistics(stats);
           
           const analysisStart = performance.now();
-          const analysisResult = performAnalysis(enhanced);
+          const analysisResult = performAnalysis(packets);
           const analysisTime = performance.now() - analysisStart;
           
           if (process.env.NODE_ENV === 'development') {
@@ -181,7 +183,7 @@ export default function Home() {
           
           // Calculate protocol counts
           const counts: Record<string, number> = {};
-          enhanced.forEach(p => {
+          packets.forEach(p => {
             counts[p.protocol] = (counts[p.protocol] || 0) + 1;
           });
           setProtocolCounts(counts);
@@ -190,7 +192,7 @@ export default function Home() {
           if (stats && analysisResult) {
             setCaptures(prev => [...prev, {
               name: file.name,
-              packets: enhanced,
+              packets: packets,
               statistics: stats,
               analysis: analysisResult,
               timestamp: Date.now(),
@@ -295,6 +297,49 @@ export default function Home() {
     setShowSaveModal(true);
   }, [user, uploadedFile, allPackets, statistics, analysis]);
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSearch: () => {
+      searchInputRef.current?.focus();
+    },
+    onSave: handleSaveSession,
+    onEscape: () => {
+      if (showShortcutsModal) setShowShortcutsModal(false);
+      else if (showSaveModal) setShowSaveModal(false);
+      else if (showHistoryModal) setShowHistoryModal(false);
+      else if (showAuthModal) setShowAuthModal(false);
+      else if (selectedPacket) setSelectedPacket(null);
+    },
+    onHelp: () => setShowShortcutsModal(prev => !prev),
+    onAIAssistant: () => {
+      if (allPackets.length > 0) {
+        setCurrentView('ai-chat');
+      } else {
+        toast.error('Upload a PCAP file first to use AI features');
+      }
+    },
+    onNextError: () => {
+      const errorPackets = filteredPackets.filter(p => p.flags?.hasError || p.flags?.isRetransmission);
+      if (errorPackets.length === 0) {
+        toast.error('No error packets found');
+        return;
+      }
+      const currentIndex = selectedPacket ? errorPackets.findIndex(p => p.id === selectedPacket.id) : -1;
+      const nextIndex = (currentIndex + 1) % errorPackets.length;
+      setSelectedPacket(errorPackets[nextIndex]);
+    },
+    onPrevError: () => {
+      const errorPackets = filteredPackets.filter(p => p.flags?.hasError || p.flags?.isRetransmission);
+      if (errorPackets.length === 0) {
+        toast.error('No error packets found');
+        return;
+      }
+      const currentIndex = selectedPacket ? errorPackets.findIndex(p => p.id === selectedPacket.id) : -1;
+      const prevIndex = currentIndex <= 0 ? errorPackets.length - 1 : currentIndex - 1;
+      setSelectedPacket(errorPackets[prevIndex]);
+    },
+  });
+
   const handleFilterChange = useCallback((filter: PacketFilter) => {
     console.group('Filter Applied');
     console.log('Filter settings:', filter);
@@ -378,6 +423,16 @@ export default function Home() {
           
           {allPackets.length > 0 && (
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowShortcutsModal(true)}
+                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
+                aria-label="Show keyboard shortcuts"
+                title="Keyboard shortcuts (Ctrl+/)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
               {user && !currentSession.isFromDatabase && (
                 <button
                   onClick={handleSaveSession}
@@ -669,6 +724,7 @@ export default function Home() {
             {currentView === 'packets' && (
               <>
                 <FilterBar 
+                  ref={searchInputRef}
                   onFilterChange={handleFilterChange}
                   protocolCounts={protocolCounts}
                 />
@@ -767,6 +823,12 @@ export default function Home() {
           onClose={() => setShowHistoryModal(false)}
         />
       )}
+
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal
+        isOpen={showShortcutsModal}
+        onClose={() => setShowShortcutsModal(false)}
+      />
     </main>
   );
 }
