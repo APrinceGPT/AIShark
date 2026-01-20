@@ -235,20 +235,30 @@ export default function Home() {
     try {
       const sessionData = await loadSession(sessionId);
       if (sessionData) {
+        // Set statistics
         setStatistics(sessionData.statistics);
-        const anomalyData = (sessionData.statistics as any).anomaly_data || {};
+        
+        // Clear packets since we don't store them (would need PCAP file to reparse)
+        setAllPackets([]);
+        setFilteredPackets([]);
+        
+        // Extract analysis data - need to fetch from session_statistics separately
+        // For now, create empty analysis since anomaly_data structure may vary
         setAnalysis({
-          insights: anomalyData.insights || [],
-          errors: anomalyData.errors || [],
-          latencyIssues: anomalyData.latencyIssues || [],
-        } as AnalysisResult);
+          insights: [],
+          errors: [],
+          latencyIssues: [],
+          packetLoss: []
+        });
+        
         setCurrentSession({ sessionId, isFromDatabase: true });
         setCurrentView('statistics');
-        toast.success('Session loaded successfully!');
+        toast.success('Session loaded successfully! Note: Packet data not available.');
       } else {
         toast.error('Failed to load session');
       }
     } catch (error) {
+      console.error('Load session error:', error);
       toast.error('Error loading session');
     } finally {
       setIsProcessing(false);
