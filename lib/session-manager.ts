@@ -22,6 +22,11 @@ export interface LoadSessionData {
   statistics: PacketStatistics;
   packets: Packet[];
   insights: AIInsight[];
+  anomalyData?: {
+    insights: any[];
+    errors: any[];
+    latencyIssues: any[];
+  };
 }
 
 /**
@@ -95,7 +100,20 @@ export async function saveSession(
 
     if (statsError) {
       console.error('Statistics save error:', statsError);
-      // Non-critical, continue
+      // Rollback: delete the session record since statistics are critical
+      await supabase
+        .from('analysis_sessions')
+        .delete()
+        .eq('id', session.id);
+      
+      // Also clean up uploaded file if it exists
+      if (pcapFilePath) {
+        await supabase.storage
+          .from('pcap-files')
+          .remove([pcapFilePath]);
+      }
+      
+      return { success: false, error: `Failed to save statistics: ${statsError.message}` };
     }
 
     return { success: true, sessionId: session.id };
@@ -175,6 +193,7 @@ export async function loadSession(sessionId: string): Promise<LoadSessionData | 
       statistics: convertedStats,
       packets: [], // Packets not stored in DB, would need to reparse PCAP file
       insights: insights || [],
+      anomalyData: stats.anomaly_data || undefined,
     };
   } catch (error) {
     console.error('Load session error:', error);
@@ -231,10 +250,17 @@ export async function deleteSession(sessionId: string, userId: string): Promise<
       .single();
 
     if (session) {
-      // Try to delete file from storage
-      await supabase.storage
+      // Try to delete file from storage - matches the upload path pattern
+      // Files are stored as: userId/timestamp_fileName
+      const storagePath = `${userId}/${session.file_name}`;
+      const { error: storageError } = await supabase.storage
         .from('pcap-files')
-        .remove([`${userId}/${session.file_name}`]);
+        .remove([storagePath]);
+      
+      if (storageError) {
+        console.warn('Storage file deletion failed (may not exist):', storageError.message);
+        // Continue with session deletion even if file doesn't exist
+      }
     }
 
     // Delete session (cascade will delete related records)
