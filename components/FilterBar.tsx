@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { PacketFilter } from '@/types/packet';
 
 interface FilterBarProps {
@@ -8,7 +8,8 @@ interface FilterBarProps {
   protocolCounts: Record<string, number>;
 }
 
-export default function FilterBar({ onFilterChange, protocolCounts }: FilterBarProps) {
+const FilterBar = forwardRef<HTMLInputElement, FilterBarProps>(
+  ({ onFilterChange, protocolCounts }, ref) => {
   const [activeProtocols, setActiveProtocols] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sourceIP, setSourceIP] = useState('');
@@ -60,6 +61,8 @@ export default function FilterBar({ onFilterChange, protocolCounts }: FilterBarP
                 key={protocol}
                 onClick={() => handleProtocolToggle(protocol)}
                 disabled={count === 0}
+                aria-label={`Filter by ${protocol} protocol${count > 0 ? ` (${count} packets)` : ''}`}
+                aria-pressed={isActive}
                 className={`
                   px-3 py-1 rounded-full text-sm font-medium transition-colors
                   ${isActive 
@@ -78,6 +81,7 @@ export default function FilterBar({ onFilterChange, protocolCounts }: FilterBarP
           {activeProtocols.length > 0 && (
             <button
               onClick={handleClearFilters}
+              aria-label="Clear all filters"
               className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200"
             >
               Clear All
@@ -89,6 +93,7 @@ export default function FilterBar({ onFilterChange, protocolCounts }: FilterBarP
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="relative">
             <input
+              ref={ref}
               type="text"
               placeholder="Search (IP, port, content...)"
               value={searchTerm}
@@ -96,9 +101,10 @@ export default function FilterBar({ onFilterChange, protocolCounts }: FilterBarP
                 setSearchTerm(e.target.value);
                 updateFilter({ searchTerm: e.target.value });
               }}
+              aria-label="Search packets by IP, port, or content"
               className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -111,6 +117,7 @@ export default function FilterBar({ onFilterChange, protocolCounts }: FilterBarP
               setSourceIP(e.target.value);
               updateFilter({ sourceIP: e.target.value });
             }}
+            aria-label="Filter by source IP address"
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           
@@ -122,10 +129,15 @@ export default function FilterBar({ onFilterChange, protocolCounts }: FilterBarP
               setDestIP(e.target.value);
               updateFilter({ destinationIP: e.target.value });
             }}
+            aria-label="Filter by destination IP address"
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
     </div>
   );
-}
+});
+
+FilterBar.displayName = 'FilterBar';
+
+export default FilterBar;

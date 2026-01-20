@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { X, Save } from 'lucide-react';
-import { SaveSessionData, saveSession } from '@/lib/session-manager';
+import { SaveSessionData, saveSession, saveCachedInsights } from '@/lib/session-manager';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from './ToastContainer';
+import { aiCache } from '@/lib/ai-cache';
 
 interface SaveSessionModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export default function SaveSessionModal({ isOpen, onClose, data, onSaved }: Sav
     setSaving(true);
 
     try {
+      // Save session first
       const result = await saveSession(
         {
           ...data,
@@ -43,7 +45,19 @@ export default function SaveSessionModal({ isOpen, onClose, data, onSaved }: Sav
       );
 
       if (result.success && result.sessionId) {
-        toast.success('Session saved successfully!');
+        // Save cached AI insights
+        const cachedInsights = aiCache.getAllCachedInsights();
+        if (cachedInsights.length > 0) {
+          const insightResult = await saveCachedInsights(result.sessionId, cachedInsights);
+          if (insightResult.success) {
+            toast.success(`Session saved! ${insightResult.saved} AI insight(s) preserved.`);
+          } else {
+            toast.success('Session saved! (AI insights could not be saved)');
+          }
+        } else {
+          toast.success('Session saved successfully!');
+        }
+        
         onSaved?.(result.sessionId);
         onClose();
       } else {
