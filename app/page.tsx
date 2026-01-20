@@ -11,9 +11,21 @@ import ExportTools from '@/components/ExportTools';
 import AIInsights from '@/components/AIInsights';
 import ChatInterface from '@/components/ChatInterface';
 import CompareCaptures from '@/components/CompareCaptures';
+import AuthModal from '@/components/AuthModal';
+import UserProfile from '@/components/UserProfile';
+import SaveSessionModal from '@/components/SaveSessionModal';
+import AnalysisHistory from '@/components/AnalysisHistory';
 import { toast } from '@/components/ToastContainer';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { enhancePackets, calculateStatistics, performAnalysis } from '@/lib/analyzer';
+import { useAuth } from '@/lib/auth-context';
+import { loadSession } from '@/lib/session-manager';
+import { Save, History, LogIn } from 'lucide-react';
+
+interface SessionData {
+  sessionId?: string;
+  isFromDatabase: boolean;
+}
 
 export default function Home() {
   const [allPackets, setAllPackets] = useState<Packet[]>([]);
@@ -24,6 +36,14 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentView, setCurrentView] = useState<'packets' | 'statistics' | 'analysis' | 'ai-insights' | 'ai-chat' | 'compare'>('packets');
   const [protocolCounts, setProtocolCounts] = useState<Record<string, number>>({});
+  
+  // Auth and session management state
+  const { user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [currentSession, setCurrentSession] = useState<SessionData>({ isFromDatabase: false });
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   
   // Multi-capture state for comparison
   const [captures, setCaptures] = useState<Array<{
@@ -46,6 +66,7 @@ export default function Home() {
   }, []);
 
   const handleFileUpload = useCallback(async (file: File) => {
+    setUploadedFile(file); // Track the uploaded file for saving
     console.group('AIShark PCAP File Upload');
     console.log('File Details:', {
       name: file.name,
@@ -205,7 +226,49 @@ export default function Home() {
     setAnalysis(null);
     setProtocolCounts({});
     setCurrentView('packets');
+    setUploadedFile(null);
+    setCurrentSession({ isFromDatabase: false });
   }, []);
+
+  const handleLoadSession = useCallback(async (sessionId: string) => {
+    setIsProcessing(true);
+    try {
+      const sessionData = await loadSession(sessionId);
+      if (sessionData) {
+        setStatistics(sessionData.statistics);
+        const anomalyData = (sessionData.statistics as any).anomaly_data || {};
+        setAnalysis({
+          insights: anomalyData.insights || [],
+          errors: anomalyData.errors || [],
+          latencyIssues: anomalyData.latencyIssues || [],
+        } as AnalysisResult);
+        setCurrentSession({ sessionId, isFromDatabase: true });
+        setCurrentView('statistics');
+        toast.success('Session loaded successfully!');
+      } else {
+        toast.error('Failed to load session');
+      }
+    } catch (error) {
+      toast.error('Error loading session');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, []);
+
+  const handleSaveSession = useCallback(() => {
+    if (!user) {
+      toast.error('Please sign in to save sessions');
+      setShowAuthModal(true);
+      return;
+    }
+    
+    if (!uploadedFile || !allPackets.length || !statistics || !analysis) {
+      toast.error('No analysis data to save');
+      return;
+    }
+
+    setShowSaveModal(true);
+  }, [user, uploadedFile, allPackets, statistics, analysis]);
 
   const handleFilterChange = useCallback((filter: PacketFilter) => {
     console.group('Filter Applied');
@@ -290,6 +353,15 @@ export default function Home() {
           
           {allPackets.length > 0 && (
             <div className="flex items-center gap-3">
+              {user && !currentSession.isFromDatabase && (
+                <button
+                  onClick={handleSaveSession}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 font-medium"
+                >
+                  <Save className="w-5 h-5" />
+                  Save Session
+                </button>
+              )}
               <button
                 onClick={handleNewUpload}
                 className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
@@ -299,10 +371,17 @@ export default function Home() {
                 </svg>
                 Upload New File
               </button>
-              <ExportTools 
-                packets={filteredPackets} 
-                selectedPacketIds={selectedPacket ? [selectedPacket.id] : []}
-              />
+              {user ? (
+                <UserProfile onHistoryClick={() => setShowHistoryModal(true)} />
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
+                >
+                  <LogIn className="w-5 h-5" />
+                  Sign In
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -627,6 +706,39 @@ export default function Home() {
         <PacketDetails
           packet={selectedPacket}
           onClose={() => setSelectedPacket(null)}
+        />
+      )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
+
+      {/* Save Session Modal */}
+      {showSaveModal && uploadedFile && (
+        <SaveSessionModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          data={{
+            fileName: uploadedFile.name,
+            fileSize: uploadedFile.size,
+            packets: allPackets,
+            statistics: statistics!,
+            analysis: analysis!,
+            pcapFile: uploadedFile,
+          }}
+          onSaved={(sessionId) => {
+            setCurrentSession({ sessionId, isFromDatabase: true });
+          }}
+        />
+      )}
+
+      {/* Analysis History Modal */}
+      {showHistoryModal && (
+        <AnalysisHistory
+          onLoadSession={handleLoadSession}
+          onClose={() => setShowHistoryModal(false)}
         />
       )}
     </main>
