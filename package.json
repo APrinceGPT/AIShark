@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:db": "tsx test-db-connection.ts"
+    "test:db": "tsx scripts/test-db-connection.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

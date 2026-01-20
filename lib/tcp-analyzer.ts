@@ -1,52 +1,4 @@
-import { Packet, TCPStream, PacketFlags } from '@/types/packet';
-
-export function analyzeTCP(packets: Packet[]): Map<string, TCPStream> {
-  const streams = new Map<string, TCPStream>();
-
-  for (const packet of packets) {
-    if (!packet.layers.tcp || !packet.layers.ip) continue;
-
-    const tcp = packet.layers.tcp;
-    const ip = packet.layers.ip;
-    
-    const streamKey = `${ip.source}:${tcp.sourcePort}-${ip.destination}:${tcp.destinationPort}`;
-    const reverseKey = `${ip.destination}:${tcp.destinationPort}-${ip.source}:${tcp.sourcePort}`;
-
-    let stream = streams.get(streamKey) || streams.get(reverseKey);
-
-    if (!stream) {
-      stream = {
-        id: streamKey,
-        source: ip.source,
-        destination: ip.destination,
-        sourcePort: tcp.sourcePort,
-        destinationPort: tcp.destinationPort,
-        packets: [],
-        data: {
-          client: [],
-          server: [],
-        },
-      };
-      streams.set(streamKey, stream);
-    }
-
-    stream.packets.push(packet);
-
-    // Collect payload data
-    if (tcp.payload && tcp.payload.length > 0) {
-      const isClientToServer = 
-        ip.source === stream.source && tcp.sourcePort === stream.sourcePort;
-      
-      if (isClientToServer) {
-        stream.data.client.push(tcp.payload);
-      } else {
-        stream.data.server.push(tcp.payload);
-      }
-    }
-  }
-
-  return streams;
-}
+import { Packet, PacketFlags } from '@/types/packet';
 
 export function detectRetransmissions(packets: Packet[]): number[] {
   const retransmittedPacketIds: number[] = [];
@@ -149,31 +101,4 @@ export function analyzeHandshakes(packets: Packet[]): { successful: number; fail
 
 export function calculateLatency(request: Packet, response: Packet): number {
   return response.timestamp - request.timestamp;
-}
-
-export function reconstructTCPStream(stream: TCPStream): { client: string; server: string } {
-  const decoder = new TextDecoder('utf-8', { fatal: false });
-  
-  const clientData = new Uint8Array(
-    stream.data.client.reduce((acc, arr) => acc + arr.length, 0)
-  );
-  let clientOffset = 0;
-  for (const chunk of stream.data.client) {
-    clientData.set(chunk, clientOffset);
-    clientOffset += chunk.length;
-  }
-
-  const serverData = new Uint8Array(
-    stream.data.server.reduce((acc, arr) => acc + arr.length, 0)
-  );
-  let serverOffset = 0;
-  for (const chunk of stream.data.server) {
-    serverData.set(chunk, serverOffset);
-    serverOffset += chunk.length;
-  }
-
-  return {
-    client: decoder.decode(clientData),
-    server: decoder.decode(serverData),
-  };
 }
