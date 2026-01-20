@@ -65,32 +65,3 @@ function parseHTTPHeaders(text: string): Record<string, string> {
   
   return headers;
 }
-
-export function reconstructHTTPStream(packets: Packet[]): string {
-  const httpPackets = packets.filter(p => p.protocol === 'HTTP' || p.protocol === 'HTTPS');
-  let stream = '';
-
-  for (const packet of httpPackets) {
-    const http = analyzeHTTP(packet);
-    if (http) {
-      if (http.isRequest) {
-        stream += `>>> REQUEST <<<\n`;
-        stream += `${http.method} ${http.uri} HTTP/${http.version}\n`;
-      } else {
-        stream += `\n<<< RESPONSE <<<\n`;
-        stream += `HTTP/${http.version} ${http.statusCode} ${http.statusText}\n`;
-      }
-      
-      for (const [key, value] of Object.entries(http.headers)) {
-        stream += `${key}: ${value}\n`;
-      }
-      
-      if (http.body) {
-        stream += `\n${http.body}\n`;
-      }
-      stream += '\n' + '='.repeat(80) + '\n\n';
-    }
-  }
-
-  return stream;
-}

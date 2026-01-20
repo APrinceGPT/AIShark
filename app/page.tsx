@@ -66,14 +66,16 @@ export default function Home() {
   }, []);
 
   const handleFileUpload = useCallback(async (file: File) => {
-    setUploadedFile(file); // Track the uploaded file for saving
-    console.group('AIShark PCAP File Upload');
-    console.log('File Details:', {
-      name: file.name,
-      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
-      type: file.type,
-      lastModified: new Date(file.lastModified).toISOString(),
-    });
+    setUploadedFile(file);
+    if (process.env.NODE_ENV === 'development') {
+      console.group('AIShark PCAP File Upload');
+      console.log('File Details:', {
+        name: file.name,
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+        type: file.type,
+        lastModified: new Date(file.lastModified).toISOString(),
+      });
+    }
 
     setIsProcessing(true);
     setAllPackets([]);
@@ -82,20 +84,20 @@ export default function Home() {
     setAnalysis(null);
 
     try {
-      console.log('Reading file as ArrayBuffer...');
       const startRead = performance.now();
       const arrayBuffer = await file.arrayBuffer();
       const readTime = performance.now() - startRead;
-      console.log(`File read complete in ${readTime.toFixed(2)}ms`);
-      console.log(`Buffer size: ${arrayBuffer.byteLength} bytes`);
-
-      // Create web worker for parsing
-      console.log('Creating Web Worker for parsing...');
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Reading file as ArrayBuffer...');
+        console.log(`File read complete in ${readTime.toFixed(2)}ms`);
+        console.log(`Buffer size: ${arrayBuffer.byteLength} bytes`);
+        console.log('Creating Web Worker for parsing...');
+      }
       workerRef.current = new Worker(
         new URL('../workers/pcap.worker.ts', import.meta.url),
         { type: 'module' }
       );
-      console.log('Worker created successfully');
 
       const packets: Packet[] = [];
       const parseStartTime = performance.now();
@@ -105,15 +107,18 @@ export default function Home() {
 
         if (type === 'progress') {
           packets.push(...chunk);
-          console.log(`Progress: ${current}/${total} packets (${((current/total)*100).toFixed(1)}%)`);
           
           // Update UI periodically
           if (packets.length % 1000 === 0 || packets.length === total) {
-            console.log('Enhancing packets with protocol analysis...');
             const enhanceStart = performance.now();
             const enhanced = enhancePackets([...packets]);
             const enhanceTime = performance.now() - enhanceStart;
-            console.log(`Enhanced ${enhanced.length} packets in ${enhanceTime.toFixed(2)}ms`);
+            
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Progress: ${current}/${total} packets (${((current/total)*100).toFixed(1)}%)`);
+              console.log('Enhancing packets with protocol analysis...');
+              console.log(`Enhanced ${enhanced.length} packets in ${enhanceTime.toFixed(2)}ms`);
+            }
             
             setAllPackets(enhanced);
             setFilteredPackets(enhanced);
@@ -124,44 +129,51 @@ export default function Home() {
               counts[p.protocol] = (counts[p.protocol] || 0) + 1;
             });
             setProtocolCounts(counts);
-            console.log('Protocol Distribution:', counts);
           }
         } else if (type === 'complete') {
           const parseTime = performance.now() - parseStartTime;
-          console.log(`Parsing complete in ${parseTime.toFixed(2)}ms`);
-          console.log(`Total packets parsed: ${packets.length}`);
           
-          console.log('Final enhancement pass...');
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Parsing complete in ${parseTime.toFixed(2)}ms`);
+            console.log(`Total packets parsed: ${packets.length}`);
+            console.log('Final enhancement pass...');
+          }
           const enhanced = enhancePackets(packets);
           setAllPackets(enhanced);
           setFilteredPackets(enhanced);
           
           // Calculate statistics and perform analysis
-          console.log('Calculating statistics...');
           const statsStart = performance.now();
           const stats = calculateStatistics(enhanced);
           const statsTime = performance.now() - statsStart;
-          console.log(`Statistics calculated in ${statsTime.toFixed(2)}ms`);
-          console.log('Statistics:', {
-            totalPackets: stats.totalPackets,
-            protocols: Object.keys(stats.protocolDistribution).length,
-            errors: stats.errors,
-            bandwidth: `${(stats.bandwidth.total / 1024 / 1024).toFixed(2)} MB`,
-          });
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Calculating statistics...');
+            console.log(`Statistics calculated in ${statsTime.toFixed(2)}ms`);
+            console.log('Statistics:', {
+              totalPackets: stats.totalPackets,
+              protocols: Object.keys(stats.protocolDistribution).length,
+              errors: stats.errors,
+              bandwidth: `${(stats.bandwidth.total / 1024 / 1024).toFixed(2)} MB`,
+            });
+          }
           setStatistics(stats);
           
-          console.log('Performing analysis...');
           const analysisStart = performance.now();
           const analysisResult = performAnalysis(enhanced);
           const analysisTime = performance.now() - analysisStart;
-          console.log(`Analysis complete in ${analysisTime.toFixed(2)}ms`);
-          console.log('Analysis Results:', {
-            insights: analysisResult.insights.length,
-            latencyIssues: analysisResult.latencyIssues.length,
-            errors: analysisResult.errors.length,
-          });
-          if (analysisResult.insights.length > 0) {
-            console.warn('Issues Found:', analysisResult.insights);
+          
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Performing analysis...');
+            console.log(`Analysis complete in ${analysisTime.toFixed(2)}ms`);
+            console.log('Analysis Results:', {
+              insights: analysisResult.insights.length,
+              latencyIssues: analysisResult.latencyIssues.length,
+              errors: analysisResult.errors.length,
+            });
+            if (analysisResult.insights.length > 0) {
+              console.warn('Issues Found:', analysisResult.insights);
+            }
           }
           setAnalysis(analysisResult);
 
@@ -186,17 +198,20 @@ export default function Home() {
           }
 
           const totalTime = performance.now() - parseStartTime;
-          console.log(`Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
-          console.groupEnd();
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
+            console.groupEnd();
+          }
 
           if (workerRef.current) {
             workerRef.current.terminate();
             workerRef.current = null;
-            console.log('Worker terminated');
           }
         } else if (type === 'error') {
-          console.error('Worker error:', event.data.error);
-          console.groupEnd();
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Worker error:', event.data.error);
+            console.groupEnd();
+          }
           toast.error(`Error parsing file: ${event.data.error}`);
           setIsProcessing(false);
           
@@ -716,6 +731,7 @@ export default function Home() {
         <PacketDetails
           packet={selectedPacket}
           onClose={() => setSelectedPacket(null)}
+          sessionId={currentSession.sessionId}
         />
       )}
 

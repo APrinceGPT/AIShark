@@ -1,14 +1,103 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Packet } from '@/types/packet';
 import { bytesToString } from '@/lib/utils';
+import { addAnnotation, getAnnotations, updateAnnotation, deleteAnnotation } from '@/lib/annotation-manager';
+import { PacketAnnotation } from '@/types/database';
+import { toast } from './ToastContainer';
+import { MessageSquare, Save, X, AlertCircle, Info } from 'lucide-react';
 
 interface PacketDetailsProps {
   packet: Packet | null;
   onClose: () => void;
+  sessionId?: string;
 }
 
-export default function PacketDetails({ packet, onClose }: PacketDetailsProps) {
+export default function PacketDetails({ packet, onClose, sessionId }: PacketDetailsProps) {
+  const [annotations, setAnnotations] = useState<PacketAnnotation[]>([]);
+  const [showAnnotationForm, setShowAnnotationForm] = useState(false);
+  const [annotationText, setAnnotationText] = useState('');
+  const [annotationSeverity, setAnnotationSeverity] = useState<'info' | 'warning' | 'critical'>('info');
+  const [editingAnnotation, setEditingAnnotation] = useState<PacketAnnotation | null>(null);
+  const [loadingAnnotations, setLoadingAnnotations] = useState(false);
+
+  useEffect(() => {
+    if (packet && sessionId) {
+      loadAnnotationsForPacket();
+    }
+  }, [packet?.id, sessionId]);
+
+  const loadAnnotationsForPacket = async () => {
+    if (!sessionId || !packet) return;
+    
+    setLoadingAnnotations(true);
+    try {
+      const allAnnotations = await getAnnotations(sessionId);
+      const packetAnnotations = allAnnotations.filter(a => a.packet_number === packet.id);
+      setAnnotations(packetAnnotations);
+    } catch (error) {
+      console.error('Failed to load annotations:', error);
+    } finally {
+      setLoadingAnnotations(false);
+    }
+  };
+
+  const handleSaveAnnotation = async () => {
+    if (!sessionId || !packet || !annotationText.trim()) return;
+
+    try {
+      if (editingAnnotation) {
+        const result = await updateAnnotation(editingAnnotation.id, {
+          annotation: annotationText,
+          severity: annotationSeverity
+        });
+        if (result) {
+          toast.success('Annotation updated');
+          await loadAnnotationsForPacket();
+        } else {
+          toast.error('Failed to update annotation');
+        }
+      } else {
+        const result = await addAnnotation(sessionId, packet.id, annotationText, annotationSeverity);
+        if (result.success) {
+          toast.success('Annotation added');
+          await loadAnnotationsForPacket();
+        } else {
+          toast.error(result.error || 'Failed to add annotation');
+        }
+      }
+      setAnnotationText('');
+      setShowAnnotationForm(false);
+      setEditingAnnotation(null);
+    } catch (error) {
+      toast.error('Error saving annotation');
+    }
+  };
+
+  const handleDeleteAnnotation = async (annotationId: string) => {
+    if (!confirm('Delete this annotation?')) return;
+
+    try {
+      const success = await deleteAnnotation(annotationId);
+      if (success) {
+        toast.success('Annotation deleted');
+        await loadAnnotationsForPacket();
+      } else {
+        toast.error('Failed to delete annotation');
+      }
+    } catch (error) {
+      toast.error('Error deleting annotation');
+    }
+  };
+
+  const startEditAnnotation = (annotation: PacketAnnotation) => {
+    setEditingAnnotation(annotation);
+    setAnnotationText(annotation.annotation || '');
+    setAnnotationSeverity(annotation.severity);
+    setShowAnnotationForm(true);
+  };
+
   if (!packet) return null;
 
   const renderLayer = (title: string, data: Record<string, any>) => (
@@ -201,6 +290,122 @@ export default function PacketDetails({ packet, onClose }: PacketDetailsProps) {
             'Handshake Type': packet.layers.tls.handshakeType || 'N/A',
             'Server Name': packet.layers.tls.serverName || 'N/A',
           })}
+
+          {/* Annotations */}
+          {sessionId && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-lg text-gray-800 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Annotations
+                </h3>
+                <button
+                  onClick={() => setShowAnnotationForm(!showAnnotationForm)}
+                  className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-1"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Add Note
+                </button>
+              </div>
+
+              {/* Annotation Form */}
+              {showAnnotationForm && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                  <textarea
+                    value={annotationText}
+                    onChange={(e) => setAnnotationText(e.target.value)}
+                    placeholder="Add a note about this packet..."
+                    className="w-full p-2 border rounded-lg mb-2 text-sm"
+                    rows={3}
+                  />
+                  <div className="flex items-center gap-2 mb-2">
+                    <label className="text-sm font-medium text-gray-700">Severity:</label>
+                    <select
+                      value={annotationSeverity}
+                      onChange={(e) => setAnnotationSeverity(e.target.value as 'info' | 'warning' | 'critical')}
+                      className="px-2 py-1 border rounded text-sm"
+                    >
+                      <option value="info">Info</option>
+                      <option value="warning">Warning</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveAnnotation}
+                      disabled={!annotationText.trim()}
+                      className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:bg-gray-300 flex items-center gap-1"
+                    >
+                      <Save className="w-4 h-4" />
+                      {editingAnnotation ? 'Update' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAnnotationForm(false);
+                        setAnnotationText('');
+                        setEditingAnnotation(null);
+                      }}
+                      className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Existing Annotations */}
+              {loadingAnnotations ? (
+                <div className="text-sm text-gray-500">Loading annotations...</div>
+              ) : annotations.length > 0 ? (
+                <div className="space-y-2">
+                  {annotations.map((annotation) => {
+                    const severityColors = {
+                      info: 'bg-blue-50 border-blue-200 text-blue-800',
+                      warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                      critical: 'bg-red-50 border-red-200 text-red-800',
+                    };
+                    const SeverityIcon = annotation.severity === 'critical' ? AlertCircle : Info;
+
+                    return (
+                      <div
+                        key={annotation.id}
+                        className={`border rounded-lg p-3 ${severityColors[annotation.severity]}`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-2 flex-1">
+                            <SeverityIcon className="w-4 h-4 mt-0.5" />
+                            <div className="flex-1">
+                              <div className="text-xs font-medium mb-1 uppercase">{annotation.severity}</div>
+                              <div className="text-sm">{annotation.annotation}</div>
+                              <div className="text-xs mt-1 opacity-75">
+                                {new Date(annotation.created_at).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => startEditAnnotation(annotation)}
+                              className="text-xs px-2 py-1 hover:bg-white hover:bg-opacity-50 rounded"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAnnotation(annotation.id)}
+                              className="text-xs px-2 py-1 hover:bg-white hover:bg-opacity-50 rounded"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 italic">No annotations yet. Add a note to bookmark this packet.</div>
+              )}
+            </div>
+          )}
 
           {/* Raw Data */}
           <div className="mb-4">

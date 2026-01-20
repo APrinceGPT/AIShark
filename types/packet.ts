@@ -158,17 +158,6 @@ export interface TCPStream {
   };
 }
 
-// HTTP conversation types
-export interface HTTPConversation {
-  id: string;
-  request: Packet;
-  response?: Packet;
-  latency?: number;
-  method: string;
-  uri: string;
-  statusCode?: number;
-}
-
 // Analysis results
 export interface AnalysisResult {
   latencyIssues: LatencyIssue[];
@@ -197,14 +186,6 @@ export interface PacketError {
   timestamp: number;
   type: 'malformed' | 'reset' | 'timeout' | 'checksum';
   description: string;
-}
-
-// File upload types
-export interface UploadedFile {
-  name: string;
-  size: number;
-  type: string;
-  data: ArrayBuffer;
 }
 
 // Export types
