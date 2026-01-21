@@ -31,6 +31,11 @@ export interface Database {
         Insert: Omit<SessionStatistics, 'id' | 'created_at'>;
         Update: Partial<Omit<SessionStatistics, 'id' | 'created_at'>>;
       };
+      learned_patterns: {
+        Row: LearnedPattern;
+        Insert: Omit<LearnedPattern, 'id' | 'created_at' | 'updated_at' | 'occurrence_count' | 'confidence_score' | 'first_seen'>;
+        Update: Partial<Omit<LearnedPattern, 'id' | 'created_at' | 'first_seen'>>;
+      };
     };
   };
 }
@@ -80,7 +85,23 @@ export interface SessionStatistics {
   top_talkers: Array<{ address: string; packets: number; bytes: number }>;
   timeline_data: Array<{ timestamp: number; packets: number }>;
   anomaly_data: any;
+  pattern_signature?: Record<string, any>;
   created_at: string;
+}
+
+export interface LearnedPattern {
+  id: string;
+  user_id: string;
+  pattern_name: string;
+  pattern_type: 'traffic' | 'anomaly' | 'performance' | 'security';
+  pattern_signature: Record<string, any>;
+  occurrence_count: number;
+  confidence_score: number;
+  metadata: Record<string, any>;
+  first_seen: string;
+  last_seen: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Helper types for frontend use

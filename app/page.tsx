@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import FileUpload from '@/components/FileUpload';
 import FilterBar from '@/components/FilterBar';
+import AdvancedFilterBar from '@/components/AdvancedFilterBar';
 import PacketList from '@/components/PacketList';
 import PacketDetails from '@/components/PacketDetails';
 import Statistics from '@/components/Statistics';
@@ -17,9 +18,13 @@ import SaveSessionModal from '@/components/SaveSessionModal';
 import AnalysisHistory from '@/components/AnalysisHistory';
 import AIPacketAssistant from '@/components/AIPacketAssistant';
 import AISemanticSearch from '@/components/AISemanticSearch';
+import PerformanceReport from '@/components/PerformanceReport';
+import PredictiveInsights from '@/components/PredictiveInsights';
+import IntegrationSettings from '@/components/IntegrationSettings';
 import { toast } from '@/components/ToastContainer';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { calculateStatistics, performAnalysis } from '@/lib/analyzer';
+import { AdvancedFilter, applyAdvancedFilter } from '@/lib/filter-engine';
 import { useAuth } from '@/lib/auth-context';
 import { loadSession } from '@/lib/session-manager';
 import { Save, History, LogIn } from 'lucide-react';
@@ -38,7 +43,7 @@ export default function Home() {
   const [statistics, setStatistics] = useState<PacketStatistics | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentView, setCurrentView] = useState<'packets' | 'statistics' | 'analysis' | 'ai-insights' | 'ai-chat' | 'compare'>('packets');
+  const [currentView, setCurrentView] = useState<'packets' | 'statistics' | 'analysis' | 'ai-insights' | 'ai-chat' | 'compare' | 'performance'>('packets');
   const [protocolCounts, setProtocolCounts] = useState<Record<string, number>>({});
   
   // Auth and session management state
@@ -47,6 +52,9 @@ export default function Home() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showPerformanceReport, setShowPerformanceReport] = useState(false);
+  const [showPredictiveInsights, setShowPredictiveInsights] = useState(false);
+  const [showIntegrations, setShowIntegrations] = useState(false);
   const [enableAIAssistant, setEnableAIAssistant] = useState(true);
   const [currentSession, setCurrentSession] = useState<SessionData>({ isFromDatabase: false });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -347,49 +355,14 @@ export default function Home() {
     },
   });
 
-  const handleFilterChange = useCallback((filter: PacketFilter) => {
+  const handleFilterChange = useCallback((filter: PacketFilter | AdvancedFilter) => {
     console.group('Filter Applied');
     console.log('Filter settings:', filter);
     
-    let filtered = [...allPackets];
-    const originalCount = filtered.length;
-
-    // Filter by protocols
-    if (filter.protocols && filter.protocols.length > 0) {
-      filtered = filtered.filter(p => filter.protocols.includes(p.protocol));
-      console.log(`Protocol filter: ${filter.protocols.join(', ')} - ${filtered.length} packets match`);
-    }
-
-    // Filter by source IP
-    if (filter.sourceIP) {
-      const beforeCount = filtered.length;
-      filtered = filtered.filter(p => 
-        p.source.toLowerCase().includes(filter.sourceIP!.toLowerCase())
-      );
-      console.log(`Source IP filter: "${filter.sourceIP}" - ${filtered.length}/${beforeCount} packets match`);
-    }
-
-    // Filter by destination IP
-    if (filter.destinationIP) {
-      const beforeCount = filtered.length;
-      filtered = filtered.filter(p => 
-        p.destination.toLowerCase().includes(filter.destinationIP!.toLowerCase())
-      );
-      console.log(`Destination IP filter: "${filter.destinationIP}" - ${filtered.length}/${beforeCount} packets match`);
-    }
-
-    // Filter by search term
-    if (filter.searchTerm) {
-      const beforeCount = filtered.length;
-      const term = filter.searchTerm.toLowerCase();
-      filtered = filtered.filter(p => 
-        p.source.toLowerCase().includes(term) ||
-        p.destination.toLowerCase().includes(term) ||
-        p.info.toLowerCase().includes(term) ||
-        p.protocol.toLowerCase().includes(term)
-      );
-      console.log(`Search filter: "${filter.searchTerm}" - ${filtered.length}/${beforeCount} packets match`);
-    }
+    const originalCount = allPackets.length;
+    
+    // Use advanced filter engine if available
+    const filtered = applyAdvancedFilter(allPackets, filter as AdvancedFilter);
 
     console.log(`Filter result: ${filtered.length}/${originalCount} packets (${((filtered.length/originalCount)*100).toFixed(1)}%)`);
     console.groupEnd();
@@ -448,63 +421,65 @@ export default function Home() {
             </div>
           </div>
           
-          {allPackets.length > 0 && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowShortcutsModal(true)}
-                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
-                aria-label="Show keyboard shortcuts"
-                title="Keyboard shortcuts (Ctrl+/)"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setEnableAIAssistant(!enableAIAssistant)}
-                className={`p-2 rounded-lg transition-colors ${
-                  enableAIAssistant
-                    ? 'bg-yellow-400 text-white hover:bg-yellow-500'
-                    : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-                }`}
-                aria-label="Toggle AI Packet Assistant"
-                title={`AI Packet Assistant ${enableAIAssistant ? 'On' : 'Off'}`}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </button>
-              {user && !currentSession.isFromDatabase && (
+          <div className="flex items-center gap-3">
+            {allPackets.length > 0 && (
+              <>
                 <button
-                  onClick={handleSaveSession}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 font-medium"
+                  onClick={() => setShowShortcutsModal(true)}
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
+                  aria-label="Show keyboard shortcuts"
+                  title="Keyboard shortcuts (Ctrl+/)"
                 >
-                  <Save className="w-5 h-5" />
-                  Save Session
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </button>
-              )}
-              <button
-                onClick={handleNewUpload}
-                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                Upload New File
-              </button>
-              {user ? (
-                <UserProfile onHistoryClick={() => setShowHistoryModal(true)} />
-              ) : (
                 <button
-                  onClick={() => setShowAuthModal(true)}
+                  onClick={() => setEnableAIAssistant(!enableAIAssistant)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    enableAIAssistant
+                      ? 'bg-yellow-400 text-white hover:bg-yellow-500'
+                      : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+                  }`}
+                  aria-label="Toggle AI Packet Assistant"
+                  title={`AI Packet Assistant ${enableAIAssistant ? 'On' : 'Off'}`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </button>
+                {user && !currentSession.isFromDatabase && (
+                  <button
+                    onClick={handleSaveSession}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 font-medium"
+                  >
+                    <Save className="w-5 h-5" />
+                    Save Session
+                  </button>
+                )}
+                <button
+                  onClick={handleNewUpload}
                   className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
                 >
-                  <LogIn className="w-5 h-5" />
-                  Sign In
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  Upload New File
                 </button>
-              )}
-            </div>
-          )}
+              </>
+            )}
+            {user ? (
+              <UserProfile onHistoryClick={() => setShowHistoryModal(true)} />
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
+              >
+                <LogIn className="w-5 h-5" />
+                Sign In
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -757,6 +732,37 @@ export default function Home() {
                       </span>
                     )}
                   </button>
+                  <button
+                    onClick={() => setShowPerformanceReport(true)}
+                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors flex items-center gap-2"
+                    title="Analyze Network Performance"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Performance
+                  </button>
+                  <button
+                    onClick={() => setShowPredictiveInsights(true)}
+                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors flex items-center gap-2"
+                    title="Predict Future Issues with ML"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    Predict
+                  </button>
+                  <button
+                    onClick={() => setShowIntegrations(true)}
+                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors flex items-center gap-2"
+                    title="Export to Monitoring Tools"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Integrations
+                  </button>
                 </div>
               </div>
             </div>
@@ -769,7 +775,7 @@ export default function Home() {
                   onSearchResults={handleAISearchResults}
                   onClearSearch={handleClearAISearch}
                 />
-                <FilterBar 
+                <AdvancedFilterBar 
                   ref={searchInputRef}
                   onFilterChange={handleFilterChange}
                   protocolCounts={protocolCounts}
@@ -867,6 +873,47 @@ export default function Home() {
         <AnalysisHistory
           onLoadSession={handleLoadSession}
           onClose={() => setShowHistoryModal(false)}
+        />
+      )}
+
+      {/* Performance Report Modal */}
+      {showPerformanceReport && statistics && (
+        <PerformanceReport
+          packets={allPackets}
+          statistics={statistics}
+          onClose={() => setShowPerformanceReport(false)}
+          onPacketClick={(packet) => {
+            setSelectedPacket(packet);
+            setShowPerformanceReport(false);
+            setCurrentView('packets');
+          }}
+        />
+      )}
+
+      {/* Predictive Insights Modal */}
+      {showPredictiveInsights && (
+        <PredictiveInsights
+          packets={allPackets}
+          statistics={statistics}
+          onClose={() => setShowPredictiveInsights(false)}
+          onPacketClick={(packetId) => {
+            const packet = allPackets.find(p => p.id === packetId);
+            if (packet) {
+              setSelectedPacket(packet);
+              setShowPredictiveInsights(false);
+              setCurrentView('packets');
+            }
+          }}
+        />
+      )}
+
+      {/* Integration Settings Modal */}
+      {showIntegrations && (
+        <IntegrationSettings
+          packets={allPackets}
+          statistics={statistics}
+          analysis={analysis}
+          onClose={() => setShowIntegrations(false)}
         />
       )}
 
