@@ -100,31 +100,70 @@ Answer the question based on the packet data. If you need more information, expl
 
 /**
  * Root Cause Analysis Prompt
- * Deep dive troubleshooting
+ * Deep dive troubleshooting with structured remediation
  */
 export const TROUBLESHOOT_PROMPT: PromptTemplate = {
   system: `You are diagnosing network issues for technical support engineers.
-Provide step-by-step root cause analysis with:
-- Clear problem identification
-- Evidence from packet data
-- Logical reasoning
-- Verification steps`,
+Provide comprehensive root cause analysis with actionable, step-by-step remediation.
+Format your response in clear sections with specific, executable steps.`,
 
   user: (context: { problem: string; captureContext: AIContext }) => `Problem Description: ${context.problem}
 
 Full Packet Capture Analysis:
 ${JSON.stringify(context.captureContext, null, 2)}
 
-Provide a comprehensive root cause analysis:
+Provide a comprehensive root cause analysis in this exact format:
 
-1. **Root Cause**: Primary cause of the issue
-2. **Evidence**: Cite specific packet numbers and data
-3. **Step-by-Step Analysis**: How you reached this conclusion
-4. **Impact Assessment**: Severity and scope
-5. **Remediation**: Detailed fix recommendations
-6. **Verification**: How to confirm the fix works
+## Root Cause
+[Clear identification of the primary problem cause]
 
-Be thorough and technical. This is for experienced network engineers.`
+## Evidence
+[Cite specific packet numbers, timestamps, and observable data that led to this conclusion]
+
+## Technical Analysis
+[Step-by-step logical reasoning of how you identified the root cause]
+
+## Impact Assessment
+- **Severity**: [Critical/High/Medium/Low]
+- **Affected Systems**: [List IPs, services, or components]
+- **User Impact**: [How users experience this problem]
+- **Business Impact**: [Potential downtime, data loss, etc.]
+
+## Remediation Steps
+
+### Immediate Actions (Quick Wins - Complete in <30 minutes)
+1. [Specific command or configuration change]
+   - **Command**: \`actual command here\`
+   - **Expected Result**: [What should happen]
+   - **Verification**: [How to confirm it worked]
+
+2. [Next immediate action]
+   [Continue as needed...]
+
+### Short-term Fixes (Complete in <1 day)
+1. [Detailed action with clear steps]
+2. [Continue as needed...]
+
+### Long-term Improvements (Strategic fixes)
+1. [Preventive measures]
+2. [Architecture changes]
+3. [Monitoring improvements]
+
+## Verification Checklist
+- [ ] [Specific test to confirm fix #1]
+- [ ] [Specific test to confirm fix #2]
+- [ ] [Metric to monitor: target value]
+- [ ] [Final validation step]
+
+## Monitoring Recommendations
+- **Key Metrics**: [What to watch]
+- **Alert Thresholds**: [When to trigger alerts]
+- **Check Frequency**: [How often to review]
+
+## Prevention
+[How to prevent this issue from recurring]
+
+Be specific, technical, and actionable. Include actual commands, configurations, and thresholds where applicable.`
 };
 
 /**

@@ -1,9 +1,10 @@
 ﻿import { useState } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
-import { Bot, AlertTriangle, Sparkles, FileSearch } from 'lucide-react';
+import { Bot, AlertTriangle, Sparkles, FileSearch, Wrench } from 'lucide-react';
 import { aiCache } from '@/lib/ai-cache';
 import { toast } from './ToastContainer';
 import FormattedAIResponse from './FormattedAIResponse';
+import RemediationGuide from './RemediationGuide';
 
 interface AIInsightsProps {
   packets: Packet[];
@@ -15,8 +16,10 @@ interface AIInsightsProps {
 export default function AIInsights({ packets, statistics, analysis, onPacketClick }: AIInsightsProps) {
   const [summary, setSummary] = useState<string>('');
   const [anomalies, setAnomalies] = useState<string>('');
-  const [loading, setLoading] = useState<'summary' | 'anomaly' | null>(null);
+  const [troubleshootAnalysis, setTroubleshootAnalysis] = useState<string>('');
+  const [loading, setLoading] = useState<'summary' | 'anomaly' | 'troubleshoot' | null>(null);
   const [error, setError] = useState<string>('');
+  const [showRemediationGuide, setShowRemediationGuide] = useState(false);
 
   const generateSummary = async () => {
     if (packets.length === 0) {
@@ -110,6 +113,63 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
     }
   };
 
+  const deepTroubleshoot = async () => {
+    if (packets.length === 0) {
+      setError('No packets to analyze');
+      return;
+    }
+
+    setLoading('troubleshoot');
+    setError('');
+
+    try {
+      // Check cache first
+      const cacheKey = { packets: packets.length, statistics, analysis };
+      const cached = aiCache.get('/api/analyze/troubleshoot', cacheKey);
+      
+      if (cached) {
+        setTroubleshootAnalysis(cached.analysis);
+        setShowRemediationGuide(true);
+        toast.success('Loaded from cache');
+        setLoading(null);
+        return;
+      }
+
+      // Default problem description if no anomalies found yet
+      const problem = anomalies || 
+        'Analyze this network capture for potential issues, performance problems, or misconfigurations.';
+
+      const response = await fetch('/api/analyze/troubleshoot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          packets, 
+          statistics, 
+          analysis,
+          problem 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTroubleshootAnalysis(data.analysis);
+        setShowRemediationGuide(true);
+        aiCache.set('/api/analyze/troubleshoot', cacheKey, data);
+        toast.success('Deep troubleshooting complete');
+      } else {
+        setError(data.error || 'Failed to generate troubleshooting guide');
+        toast.error(data.error || 'Failed to generate troubleshooting guide');
+      }
+    } catch (err) {
+      const errorMsg = 'Network error: ' + (err instanceof Error ? err.message : 'Unknown error');
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -137,6 +197,17 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             )}
             Detect Anomalies
+          </button>
+          <button
+            onClick={deepTroubleshoot}
+            disabled={loading !== null || packets.length === 0}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading === 'troubleshoot' && (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
+            <Wrench className="w-4 h-4" />
+            Deep Troubleshoot
           </button>
         </div>
       </div>
@@ -191,6 +262,14 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
         <div className="text-center py-8 text-gray-400">
           <p>Upload a packet capture to enable AI analysis</p>
         </div>
+      )}
+
+      {/* Remediation Guide Modal */}
+      {showRemediationGuide && troubleshootAnalysis && (
+        <RemediationGuide
+          analysis={troubleshootAnalysis}
+          onClose={() => setShowRemediationGuide(false)}
+        />
       )}
     </div>
   );
