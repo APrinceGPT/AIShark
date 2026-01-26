@@ -9,6 +9,13 @@ interface OnboardingTourProps {
 }
 
 export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
+  // Prevent hydration mismatch - only render Joyride on client
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [steps] = useState<Step[]>([
     {
       target: 'body',
@@ -102,6 +109,11 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
       // Handle step completion
     }
   };
+
+  // Don't render until client-side to prevent hydration mismatch
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <Joyride
