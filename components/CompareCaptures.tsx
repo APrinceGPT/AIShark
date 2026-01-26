@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import FormattedAIResponse from './FormattedAIResponse';
 
 interface Capture {
   name: string;
@@ -177,9 +178,7 @@ export default function CompareCaptures({ captures }: CompareProps) {
           </div>
           
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 prose prose-sm dark:prose-invert max-w-none">
-            <div className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-              {comparison}
-            </div>
+            <FormattedAIResponse content={comparison} />
           </div>
 
           <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-700">

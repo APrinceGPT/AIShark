@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import FormattedAIResponse from './FormattedAIResponse';
 
 /**
  * Parsed remediation step structure
@@ -214,13 +215,17 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
               {sections['Root Cause'] && (
                 <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
                   <h3 className="font-bold text-red-900 dark:text-red-200 mb-2">Root Cause</h3>
-                  <p className="text-red-800 dark:text-red-300 whitespace-pre-wrap">{sections['Root Cause']}</p>
+                  <div className="text-red-800 dark:text-red-300">
+                    <FormattedAIResponse content={sections['Root Cause']} />
+                  </div>
                 </div>
               )}
               {sections['Impact Assessment'] && (
                 <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
                   <h3 className="font-bold text-orange-900 dark:text-orange-200 mb-2">Impact Assessment</h3>
-                  <p className="text-orange-800 dark:text-orange-300 whitespace-pre-wrap">{sections['Impact Assessment']}</p>
+                  <div className="text-orange-800 dark:text-orange-300">
+                    <FormattedAIResponse content={sections['Impact Assessment']} />
+                  </div>
                 </div>
               )}
             </div>
@@ -230,7 +235,9 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
           {sections['Evidence'] && (
             <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
               <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Evidence</h3>
-              <p className="text-blue-800 dark:text-blue-300 whitespace-pre-wrap">{sections['Evidence']}</p>
+              <div className="text-blue-800 dark:text-blue-300">
+                <FormattedAIResponse content={sections['Evidence']} />
+              </div>
             </div>
           )}
 
@@ -320,13 +327,17 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
             {sections['Monitoring Recommendations'] && (
               <div className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
                 <h3 className="font-bold text-purple-900 dark:text-purple-200 mb-2">Monitoring</h3>
-                <p className="text-purple-800 dark:text-purple-300 whitespace-pre-wrap text-sm">{sections['Monitoring Recommendations']}</p>
+                <div className="text-purple-800 dark:text-purple-300 text-sm">
+                  <FormattedAIResponse content={sections['Monitoring Recommendations']} />
+                </div>
               </div>
             )}
             {sections['Prevention'] && (
               <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-lg p-4">
                 <h3 className="font-bold text-indigo-900 dark:text-indigo-200 mb-2">Prevention</h3>
-                <p className="text-indigo-800 dark:text-indigo-300 whitespace-pre-wrap text-sm">{sections['Prevention']}</p>
+                <div className="text-indigo-800 dark:text-indigo-300 text-sm">
+                  <FormattedAIResponse content={sections['Prevention']} />
+                </div>
               </div>
             )}
           </div>
@@ -337,7 +348,9 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
               <summary className="font-semibold text-gray-900 dark:text-white cursor-pointer">
                 Technical Analysis (Click to expand)
               </summary>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mt-3 text-sm">{sections['Technical Analysis']}</p>
+              <div className="text-gray-700 dark:text-gray-300 mt-3 text-sm">
+                <FormattedAIResponse content={sections['Technical Analysis']} />
+              </div>
             </details>
           )}
         </div>
