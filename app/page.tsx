@@ -30,6 +30,10 @@ import { loadSession } from '@/lib/session-manager';
 import { Save, History, LogIn } from 'lucide-react';
 import { useKeyboardShortcuts } from '@/lib/use-keyboard-shortcuts';
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal';
+import MobileNav from '@/components/MobileNav';
+import ThemeToggle from '@/components/ThemeToggle';
+import OnboardingTour from '@/components/OnboardingTour';
+import { trackFileUpload, trackAnalysisComplete, trackSessionSave, trackOnboardingComplete } from '@/lib/analytics';
 
 interface SessionData {
   sessionId?: string;
@@ -56,6 +60,7 @@ export default function Home() {
   const [showPredictiveInsights, setShowPredictiveInsights] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [enableAIAssistant, setEnableAIAssistant] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentSession, setCurrentSession] = useState<SessionData>({ isFromDatabase: false });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -76,6 +81,14 @@ export default function Home() {
   const workerRef = useRef<Worker | null>(null);
 
   useEffect(() => {
+    // Check if user is visiting for the first time
+    const hasSeenTour = localStorage.getItem('aishark-onboarding-completed');
+    if (!hasSeenTour) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  useEffect(() => {
     return () => {
       // Cleanup worker on unmount
       if (workerRef.current) {
@@ -86,6 +99,10 @@ export default function Home() {
 
   const handleFileUpload = useCallback(async (file: File) => {
     setUploadedFile(file);
+    
+    // Track file upload in Google Analytics
+    trackFileUpload(file.size, file.name);
+    
     if (process.env.NODE_ENV === 'development') {
       console.group('AIShark PCAP File Upload');
       console.log('File Details:', {
@@ -196,6 +213,10 @@ export default function Home() {
 
           setIsProcessing(false);
           
+          // Track analysis completion and log performance
+          const totalTime = performance.now() - parseStartTime;
+          trackAnalysisComplete(packets.length, totalTime);
+          
           // Calculate protocol counts
           const counts: Record<string, number> = {};
           packets.forEach(p => {
@@ -214,7 +235,6 @@ export default function Home() {
             }]);
           }
 
-          const totalTime = performance.now() - parseStartTime;
           if (process.env.NODE_ENV === 'development') {
             console.log(`Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
             console.groupEnd();
@@ -309,8 +329,17 @@ export default function Home() {
       return;
     }
 
+    // Track session save
+    trackSessionSave(true);
+    
     setShowSaveModal(true);
   }, [user, uploadedFile, allPackets, statistics, analysis]);
+
+  const handleOnboardingFinish = useCallback(() => {
+    localStorage.setItem('aishark-onboarding-completed', 'true');
+    trackOnboardingComplete();
+    setShowOnboarding(false);
+  }, []);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -407,21 +436,39 @@ export default function Home() {
   }, [allPackets]);
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
+      <header className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-gray-900 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {/* Mobile Navigation */}
+            <MobileNav
+              user={user}
+              hasPackets={allPackets.length > 0}
+              enableAIAssistant={enableAIAssistant}
+              isFromDatabase={currentSession.isFromDatabase}
+              onSaveSession={handleSaveSession}
+              onShowHistory={() => setShowHistoryModal(true)}
+              onShowAuth={() => setShowAuthModal(true)}
+              onShowShortcuts={() => setShowShortcutsModal(true)}
+              onToggleAI={() => setEnableAIAssistant(!enableAIAssistant)}
+              onNewUpload={handleNewUpload}
+            />
+            
             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <div>
               <h1 className="text-2xl font-bold">AIShark</h1>
-              <p className="text-sm text-blue-100">Network Packet Analyzer</p>
+              <p className="text-sm text-blue-100 hidden sm:block">Network Packet Analyzer</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          {/* Desktop Actions */}
+          <div className="hidden lg:flex items-center gap-3">
+            <div data-tour="theme-toggle">
+              <ThemeToggle />
+            </div>
             {allPackets.length > 0 && (
               <>
                 <button
@@ -454,17 +501,17 @@ export default function Home() {
                     className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 font-medium"
                   >
                     <Save className="w-5 h-5" />
-                    Save Session
+                    <span className="hidden xl:inline">Save Session</span>
                   </button>
                 )}
                 <button
                   onClick={handleNewUpload}
-                  className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
+                  className="px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 font-medium"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
-                  Upload New File
+                  <span className="hidden xl:inline">Upload New File</span>
                 </button>
               </>
             )}
@@ -472,11 +519,12 @@ export default function Home() {
               <UserProfile onHistoryClick={() => setShowHistoryModal(true)} />
             ) : (
               <button
+                data-tour="sign-in"
                 onClick={() => setShowAuthModal(true)}
-                className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium"
+                className="px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 font-medium"
               >
                 <LogIn className="w-5 h-5" />
-                Sign In
+                <span className="hidden xl:inline">Sign In</span>
               </button>
             )}
           </div>
@@ -486,7 +534,7 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex-1">
         {allPackets.length === 0 ? (
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50">
+          <div className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
             {/* Hero Section */}
             <div className="max-w-7xl mx-auto px-4 pt-16 pb-12">
               <div className="text-center mb-12">
@@ -495,62 +543,62 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
-                <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
                   AI-Powered PCAP Analysis
                 </h1>
-                <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
                   Analyze Wireshark packet captures with intelligent insights. Get instant summaries, 
                   detect anomalies, and troubleshoot network issues using AI.
                 </p>
               </div>
 
               {/* File Upload */}
-              <div className="mb-16">
+              <div className="mb-16" data-tour="upload-section">
                 <FileUpload onFileUpload={handleFileUpload} isProcessing={isProcessing} />
               </div>
 
               {/* Features Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-                <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16" data-tour="features">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow" data-tour="ai-features">
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
                     <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Analysis</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Smart Analysis</h3>
+                  <p className="text-gray-600 dark:text-gray-300">
                     AI automatically identifies network issues, performance bottlenecks, and security concerns with detailed explanations.
                   </p>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
                     <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Ask Questions</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Ask Questions</h3>
+                  <p className="text-gray-600 dark:text-gray-300">
                     Chat with AI about your capture. Ask "Why is this connection slow?" or "Are there security threats?" in plain English.
                   </p>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
                     <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Privacy First</h3>
-                  <p className="text-gray-600">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Privacy First</h3>
+                  <p className="text-gray-600 dark:text-gray-300">
                     Your packet data is processed client-side. Only anonymized summaries are sent to AI—your sensitive data stays private.
                   </p>
                 </div>
               </div>
 
               {/* Capabilities */}
-              <div className="bg-white rounded-xl shadow-md p-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">What You Can Do</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">What You Can Do</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
@@ -559,8 +607,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Protocol Analysis</h4>
-                      <p className="text-sm text-gray-600">HTTP/HTTPS, DNS, TCP, UDP, TLS/SSL with deep inspection</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Protocol Analysis</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">HTTP/HTTPS, DNS, TCP, UDP, TLS/SSL with deep inspection</p>
                     </div>
                   </div>
 
@@ -571,8 +619,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Anomaly Detection</h4>
-                      <p className="text-sm text-gray-600">AI identifies unusual patterns, security threats, and errors</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Anomaly Detection</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">AI identifies unusual patterns, security threats, and errors</p>
                     </div>
                   </div>
 
@@ -583,8 +631,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Root Cause Analysis</h4>
-                      <p className="text-sm text-gray-600">AI troubleshoots issues with evidence and recommendations</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Root Cause Analysis</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">AI troubleshoots issues with evidence and recommendations</p>
                     </div>
                   </div>
 
@@ -595,8 +643,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Compare Captures</h4>
-                      <p className="text-sm text-gray-600">Before/after comparison with AI-powered insights</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Compare Captures</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Before/after comparison with AI-powered insights</p>
                     </div>
                   </div>
 
@@ -607,8 +655,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Advanced Filtering</h4>
-                      <p className="text-sm text-gray-600">Search by IP, protocol, or content with instant results</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Advanced Filtering</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">Search by IP, protocol, or content with instant results</p>
                     </div>
                   </div>
 
@@ -619,8 +667,8 @@ export default function Home() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Export Reports</h4>
-                      <p className="text-sm text-gray-600">JSON, CSV, and text format exports for further analysis</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">Export Reports</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">JSON, CSV, and text format exports for further analysis</p>
                     </div>
                   </div>
                 </div>
@@ -628,21 +676,21 @@ export default function Home() {
 
               {/* Performance Stats */}
               <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg shadow p-4 text-center">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
                   <div className="text-3xl font-bold text-blue-600">1.4s</div>
-                  <div className="text-sm text-gray-600 mt-1">Parse 26K packets</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Parse 26K packets</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4 text-center">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
                   <div className="text-3xl font-bold text-green-600">85%</div>
-                  <div className="text-sm text-gray-600 mt-1">Cost savings</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Cost savings</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4 text-center">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
                   <div className="text-3xl font-bold text-purple-600">2-4s</div>
-                  <div className="text-sm text-gray-600 mt-1">AI response time</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">AI response time</div>
                 </div>
-                <div className="bg-white rounded-lg shadow p-4 text-center">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
                   <div className="text-3xl font-bold text-orange-600">100%</div>
-                  <div className="text-sm text-gray-600 mt-1">Privacy protected</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Privacy protected</div>
                 </div>
               </div>
             </div>
@@ -650,38 +698,42 @@ export default function Home() {
         ) : (
           <>
             {/* View Tabs */}
-            <div className="bg-white border-b border-gray-200">
+            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <div className="max-w-7xl mx-auto px-4">
-                <div className="flex gap-6">
+                <div className="flex gap-4 md:gap-6 overflow-x-auto scrollbar-hide">
                   <button
                     onClick={() => setCurrentView('packets')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                       currentView === 'packets'
                         ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     }`}
                   >
-                    Packets ({filteredPackets.length})
+                    <span className="hidden sm:inline">Packets </span>
+                    <span className="sm:hidden">📦 </span>
+                    ({filteredPackets.length})
                   </button>
                   <button
                     onClick={() => setCurrentView('statistics')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                       currentView === 'statistics'
                         ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     }`}
                   >
-                    Statistics
+                    <span className="hidden sm:inline">Statistics</span>
+                    <span className="sm:hidden">📊 Stats</span>
                   </button>
                   <button
                     onClick={() => setCurrentView('analysis')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
                       currentView === 'analysis'
                         ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     }`}
                   >
-                    Analysis
+                    <span className="hidden sm:inline">Analysis</span>
+                    <span className="sm:hidden">🔍</span>
                     {analysis && analysis.insights.length > 0 && (
                       <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs">
                         {analysis.insights.length}
@@ -690,42 +742,45 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setCurrentView('ai-insights')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${
                       currentView === 'ai-insights'
                         ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     }`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
-                    AI Insights
+                    <span className="hidden sm:inline">AI Insights</span>
+                    <span className="sm:hidden">AI</span>
                   </button>
                   <button
                     onClick={() => setCurrentView('ai-chat')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${
                       currentView === 'ai-chat'
                         ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     }`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
-                    Ask AI
+                    <span className="hidden sm:inline">Ask AI</span>
+                    <span className="sm:hidden">💬</span>
                   </button>
                   <button
                     onClick={() => setCurrentView('compare')}
-                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2 ${
+                    className={`py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2 ${
                       currentView === 'compare'
                         ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     }`}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    Compare
+                    <span className="hidden sm:inline">Compare</span>
+                    <span className="sm:hidden">⚖️</span>
                     {captures.length > 1 && (
                       <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">
                         {captures.length}
@@ -734,7 +789,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setShowPerformanceReport(true)}
-                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors flex items-center gap-2"
+                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium text-sm transition-colors flex items-center gap-2"
                     title="Analyze Network Performance"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -744,7 +799,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setShowPredictiveInsights(true)}
-                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors flex items-center gap-2"
+                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium text-sm transition-colors flex items-center gap-2"
                     title="Predict Future Issues with ML"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -754,7 +809,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => setShowIntegrations(true)}
-                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm transition-colors flex items-center gap-2"
+                    className="py-3 px-1 border-b-2 border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium text-sm transition-colors flex items-center gap-2"
                     title="Export to Monitoring Tools"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -930,6 +985,12 @@ export default function Home() {
           allPackets={allPackets}
         />
       )}
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        run={showOnboarding}
+        onFinish={handleOnboardingFinish}
+      />
     </main>
   );
 }

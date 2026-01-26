@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Mail, Lock, Github } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from './ToastContainer';
+import { trackAuth } from '@/lib/analytics';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -38,6 +39,9 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
       if (error) {
         toast.error(error.message || 'Authentication failed');
       } else {
+        // Track authentication event
+        trackAuth(mode === 'signin' ? 'sign_in' : 'sign_up');
+        
         toast.success(mode === 'signin' ? 'Signed in successfully!' : 'Account created! Check your email to verify.');
         onClose();
         setEmail('');
@@ -60,15 +64,15 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             {mode === 'signin' ? 'Sign In' : 'Create Account'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -79,17 +83,17 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                 <input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="you@example.com"
                   required
                 />
@@ -98,24 +102,24 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="••••••••"
                   minLength={6}
                   required
                 />
               </div>
               {mode === 'signup' && (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Must be at least 6 characters
                 </p>
               )}
@@ -135,17 +139,17 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 onClick={() => handleProviderSignIn('google')}
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -157,7 +161,7 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
               </button>
               <button
                 onClick={() => handleProviderSignIn('github')}
-                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               >
                 <Github className="w-5 h-5" />
                 GitHub
@@ -168,21 +172,21 @@ export default function AuthModal({ isOpen, onClose, defaultMode = 'signin' }: A
           {/* Toggle Mode */}
           <div className="mt-6 text-center text-sm">
             {mode === 'signin' ? (
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
                 <button
                   onClick={() => setMode('signup')}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   Sign up
                 </button>
               </p>
             ) : (
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Already have an account?{' '}
                 <button
                   onClick={() => setMode('signin')}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   Sign in
                 </button>

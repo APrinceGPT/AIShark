@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Packet } from '@/types/packet';
+import { useBreakpoint } from '@/lib/use-media-query';
+import { Clock, ArrowRight, AlertCircle } from 'lucide-react';
 
 interface PacketListProps {
   packets: Packet[];
@@ -12,7 +14,8 @@ interface PacketListProps {
 export default function PacketList({ packets, onPacketSelect, selectedPacketId }: PacketListProps) {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 100 });
   const containerRef = useRef<HTMLDivElement>(null);
-  const ROW_HEIGHT = 40;
+  const { isMobile, isTablet } = useBreakpoint();
+  const ROW_HEIGHT = isMobile ? 120 : 40;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -34,30 +37,74 @@ export default function PacketList({ packets, onPacketSelect, selectedPacketId }
 
   const getProtocolColor = (protocol: string): string => {
     const colors: Record<string, string> = {
-      HTTP: 'text-green-600 bg-green-50',
-      HTTPS: 'text-green-700 bg-green-100',
-      DNS: 'text-blue-600 bg-blue-50',
-      TCP: 'text-purple-600 bg-purple-50',
-      UDP: 'text-pink-600 bg-pink-50',
-      TLS: 'text-teal-600 bg-teal-50',
+      HTTP: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30',
+      HTTPS: 'text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/40',
+      DNS: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30',
+      TCP: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30',
+      UDP: 'text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-900/30',
+      TLS: 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30',
     };
-    return colors[protocol] || 'text-gray-600 bg-gray-50';
+    return colors[protocol] || 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700';
   };
 
   const visiblePackets = packets.slice(visibleRange.start, visibleRange.end);
 
-  return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="flex border-b border-gray-200 bg-gray-50 font-medium text-sm text-gray-700">
-        <div className="w-16 px-3 py-2 border-r">No.</div>
-        <div className="w-40 px-3 py-2 border-r">Time</div>
-        <div className="w-32 px-3 py-2 border-r">Source</div>
-        <div className="w-32 px-3 py-2 border-r">Destination</div>
-        <div className="w-24 px-3 py-2 border-r">Protocol</div>
-        <div className="w-20 px-3 py-2 border-r">Length</div>
-        <div className="flex-1 px-3 py-2">Info</div>
+  // Mobile Card View Component
+  const MobilePacketCard = ({ packet, isSelected, hasError }: { packet: Packet; isSelected: boolean; hasError: boolean }) => (
+    <div
+      onClick={() => onPacketSelect(packet)}
+      className={`
+        p-3 border-b dark:border-gray-700 cursor-pointer transition-colors
+        ${isSelected ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'}
+        ${hasError ? 'border-l-4 border-l-red-500' : ''}
+      `}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">#{packet.id + 1}</span>
+          <span className={`px-2 py-0.5 rounded text-xs font-medium ${getProtocolColor(packet.protocol)}`}>
+            {packet.protocol}
+          </span>
+          {hasError && (
+            <AlertCircle className="w-4 h-4 text-red-500" />
+          )}
+        </div>
+        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+          <Clock className="w-3 h-3" />
+          <span>{packet.timeString.substring(11)}</span>
+        </div>
       </div>
+      
+      <div className="flex items-center gap-2 mb-1 text-sm">
+        <span className="font-mono text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{packet.source}</span>
+        <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <span className="font-mono text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{packet.destination}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{packet.length}B</span>
+      </div>
+      
+      <div className="text-xs text-gray-600 dark:text-gray-400 truncate">
+        {packet.flags?.isRetransmission && (
+          <span className="text-red-600 dark:text-red-400 font-bold mr-1">[Retrans]</span>
+        )}
+        {packet.info}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800">
+      {/* Header - Desktop/Tablet Only */}
+      {!isMobile && (
+        <div className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 font-medium text-sm text-gray-700 dark:text-gray-300">
+          <div className="w-16 px-3 py-2 border-r dark:border-gray-600">No.</div>
+          <div className="w-40 px-3 py-2 border-r dark:border-gray-600">Time</div>
+          <div className="w-32 px-3 py-2 border-r dark:border-gray-600">Source</div>
+          <div className="w-32 px-3 py-2 border-r dark:border-gray-600">Destination</div>
+          <div className="w-24 px-3 py-2 border-r dark:border-gray-600">Protocol</div>
+          <div className="w-20 px-3 py-2 border-r dark:border-gray-600">Length</div>
+          <div className="flex-1 px-3 py-2">Info</div>
+        </div>
+      )}
 
       {/* Virtual Scrolling Container */}
       <div
@@ -67,46 +114,58 @@ export default function PacketList({ packets, onPacketSelect, selectedPacketId }
       >
         <div style={{ height: `${packets.length * ROW_HEIGHT}px`, position: 'relative' }}>
           <div style={{ transform: `translateY(${visibleRange.start * ROW_HEIGHT}px)` }}>
-            {visiblePackets.map((packet, index) => {
-              const actualIndex = visibleRange.start + index;
+            {visiblePackets.map((packet) => {
               const isSelected = packet.id === selectedPacketId;
               const hasError = packet.flags?.hasError || packet.flags?.isRetransmission;
 
+              // Mobile Card View
+              if (isMobile) {
+                return (
+                  <MobilePacketCard
+                    key={packet.id}
+                    packet={packet}
+                    isSelected={isSelected}
+                    hasError={hasError || false}
+                  />
+                );
+              }
+
+              // Desktop Table Row
               return (
                 <div
                   key={packet.id}
                   onClick={() => onPacketSelect(packet)}
                   className={`
-                    flex text-sm border-b cursor-pointer transition-colors
-                    ${isSelected ? 'bg-blue-100 border-blue-300' : 'hover:bg-gray-50'}
-                    ${hasError ? 'bg-red-50 border-l-4 border-l-red-500' : ''}
+                    flex text-sm border-b dark:border-gray-700 cursor-pointer transition-colors
+                    ${isSelected ? 'bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}
+                    ${hasError ? 'bg-red-50 dark:bg-red-900/30 border-l-4 border-l-red-500' : ''}
                   `}
                   title={hasError ? 'This packet has errors or warnings' : ''}
                   style={{ height: `${ROW_HEIGHT}px` }}
                 >
-                  <div className="w-16 px-3 py-2 border-r flex items-center text-gray-600">
+                  <div className="w-16 px-3 py-2 border-r dark:border-gray-700 flex items-center text-gray-600 dark:text-gray-400">
                     {packet.id + 1}
                   </div>
-                  <div className="w-40 px-3 py-2 border-r flex items-center text-xs text-gray-600">
+                  <div className="w-40 px-3 py-2 border-r dark:border-gray-700 flex items-center text-xs text-gray-600 dark:text-gray-400">
                     {packet.timeString.substring(11)}
                   </div>
-                  <div className="w-32 px-3 py-2 border-r flex items-center text-xs font-mono truncate">
+                  <div className="w-32 px-3 py-2 border-r dark:border-gray-700 flex items-center text-xs font-mono text-gray-800 dark:text-gray-200 truncate">
                     {packet.source}
                   </div>
-                  <div className="w-32 px-3 py-2 border-r flex items-center text-xs font-mono truncate">
+                  <div className="w-32 px-3 py-2 border-r dark:border-gray-700 flex items-center text-xs font-mono text-gray-800 dark:text-gray-200 truncate">
                     {packet.destination}
                   </div>
-                  <div className="w-24 px-3 py-2 border-r flex items-center">
+                  <div className="w-24 px-3 py-2 border-r dark:border-gray-700 flex items-center">
                     <span className={`px-2 py-0.5 rounded text-xs font-medium ${getProtocolColor(packet.protocol)}`}>
                       {packet.protocol}
                     </span>
                   </div>
-                  <div className="w-20 px-3 py-2 border-r flex items-center text-gray-600">
+                  <div className="w-20 px-3 py-2 border-r dark:border-gray-700 flex items-center text-gray-600 dark:text-gray-400">
                     {packet.length}
                   </div>
-                  <div className="flex-1 px-3 py-2 flex items-center truncate text-gray-700">
+                  <div className="flex-1 px-3 py-2 flex items-center truncate text-gray-700 dark:text-gray-300">
                     {packet.flags?.isRetransmission && (
-                      <span className="text-red-600 font-bold mr-2">[Retrans]</span>
+                      <span className="text-red-600 dark:text-red-400 font-bold mr-2">[Retrans]</span>
                     )}
                     {packet.info}
                   </div>
@@ -118,8 +177,10 @@ export default function PacketList({ packets, onPacketSelect, selectedPacketId }
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 px-4 py-2 text-sm text-gray-600 bg-gray-50">
-        Displaying {visibleRange.start + 1}-{Math.min(visibleRange.end, packets.length)} of {packets.length} packets
+      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">
+        <span className="hidden sm:inline">Displaying </span>
+        {visibleRange.start + 1}-{Math.min(visibleRange.end, packets.length)} of {packets.length}
+        <span className="hidden sm:inline"> packets</span>
       </div>
     </div>
   );

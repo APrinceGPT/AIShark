@@ -218,12 +218,12 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Analysis History</h2>
-              <p className="text-sm text-gray-500 mt-1">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Analysis History</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {sessions.length} session{sessions.length !== 1 ? 's' : ''} saved
               </p>
             </div>
@@ -235,7 +235,7 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                     selectedForComparison.length === 2
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   <ArrowLeftRight className="w-4 h-4" />
@@ -246,8 +246,8 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
                 onClick={toggleComparisonMode}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   comparisonMode
-                    ? 'bg-red-50 border-2 border-red-500 text-red-700'
-                    : 'bg-gray-100 border-2 border-gray-300 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-red-50 dark:bg-red-900/30 border-2 border-red-500 text-red-700 dark:text-red-400'
+                    : 'bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 <ArrowLeftRight className="w-4 h-4" />
@@ -255,7 +255,7 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
               </button>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -265,22 +265,22 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
           </div>
 
           {/* Search and Filters */}
-          <div className="p-4 border-b space-y-3">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-3">
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search sessions..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
-                  showFilters ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  showFilters ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 text-blue-700 dark:text-blue-400' : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 <Filter className="w-4 h-4" />
@@ -289,15 +289,15 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
             </div>
 
             {showFilters && (
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {/* Sort Field */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Sort By</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sort By</label>
                     <select
                       value={sortField}
                       onChange={(e) => setSortField(e.target.value as SortField)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="date">Date</option>
                       <option value="name">Name</option>
@@ -308,10 +308,10 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
 
                   {/* Sort Order */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Order</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Order</label>
                     <button
                       onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-white transition-colors flex items-center justify-center gap-2"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
                     >
                       {sortOrder === 'asc' ? (
                         <>
@@ -329,11 +329,11 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
 
                   {/* Date Filter */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Date Range</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Date Range</label>
                     <select
                       value={dateFilter}
                       onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="all">All Time</option>
                       <option value="7days">Last 7 Days</option>
@@ -343,11 +343,11 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
 
                   {/* Size Filter */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">File Size</label>
+                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">File Size</label>
                     <select
                       value={sizeFilter}
                       onChange={(e) => setSizeFilter(e.target.value as SizeFilter)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="all">All Sizes</option>
                       <option value="small">Small (&lt;1MB)</option>
@@ -366,7 +366,7 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
                       setDateFilter('all');
                       setSizeFilter('all');
                     }}
-                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     <X className="w-4 h-4" />
                     Clear all filters
@@ -384,8 +384,8 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
               </div>
             ) : filteredSessions.length === 0 ? (
               <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">
+                <FileText className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">
                   {searchTerm ? 'No sessions found' : 'No saved sessions yet'}
                 </p>
               </div>
@@ -399,9 +399,9 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
                       className={`border rounded-lg p-4 transition-all ${
                         comparisonMode
                           ? isSelected
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-blue-300 cursor-pointer'
-                          : 'border-gray-200 hover:border-blue-300'
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
                       }`}
                       onClick={() => comparisonMode && handleSelectForComparison(session.id)}
                     >
@@ -412,14 +412,14 @@ export default function AnalysisHistory({ onLoadSession, onClose }: AnalysisHist
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => handleSelectForComparison(session.id)}
-                              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                               onClick={(e) => e.stopPropagation()}
                             />
                           )}
                           <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900">{session.name}</h3>
-                            <p className="text-sm text-gray-500 mt-1">{session.file_name}</p>
-                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">{session.name}</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{session.file_name}</p>
+                            <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
                               <span className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 {formatDate(session.created_at)}

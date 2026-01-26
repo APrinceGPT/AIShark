@@ -125,14 +125,14 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow flex flex-col h-[600px]">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col h-[600px]">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">≡ƒÆ¼ Ask AI</h2>
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">💬 Ask AI</h2>
         {messages.length > 0 && (
           <button
             onClick={clearChat}
-            className="text-sm text-gray-600 hover:text-gray-900"
+            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             Clear Chat
           </button>
@@ -143,17 +143,17 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {messages.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
               Ask questions about your packet capture
             </p>
             <div className="space-y-2">
-              <p className="text-sm text-gray-400 mb-2">Quick questions:</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-2">Quick questions:</p>
               {quickQuestions.map((q, i) => (
                 <button
                   key={i}
                   onClick={() => setInput(q)}
                   disabled={packets.length === 0}
-                  className="block w-full text-left px-4 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="block w-full text-left px-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {q}
                 </button>
@@ -171,7 +171,7 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
               className={`max-w-[80%] rounded-lg px-4 py-3 ${
                 msg.role === 'user'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-900'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
               }`}
             >
               {msg.role === 'assistant' && onPacketClick ? (
@@ -188,11 +188,11 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
 
         {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg px-4 py-3">
+            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-3">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-100" />
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce delay-200" />
               </div>
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex gap-2">
           <input
             type="text"
@@ -215,12 +215,12 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
                 : 'Ask a question about your capture...'
             }
             disabled={loading || packets.length === 0}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed placeholder-gray-500 dark:placeholder-gray-400"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || loading || packets.length === 0}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
             Send
           </button>

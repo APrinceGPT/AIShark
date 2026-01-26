@@ -73,16 +73,16 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <Activity className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Performance Analysis</h2>
+            <Activity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Performance Analysis</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             aria-label="Close"
           >
             <X className="w-6 h-6" />
@@ -93,11 +93,11 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
         <div className="flex-1 overflow-y-auto p-6">
           {!report && !loading && (
             <div className="text-center py-12">
-              <Gauge className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <Gauge className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Analyze Network Performance
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Get detailed insights on latency, throughput, and bottlenecks
               </p>
               <button
@@ -111,33 +111,33 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
 
           {loading && (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Analyzing network performance...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Analyzing network performance...</p>
             </div>
           )}
 
           {report && (
             <div className="space-y-6">
               {/* Overall Score */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Network Health Score</h3>
-                    <p className="text-sm text-gray-600">Based on latency, reliability, throughput, and error rates</p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Network Health Score</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Based on latency, reliability, throughput, and error rates</p>
                   </div>
                   <div className="text-center">
                     <div className={`text-5xl font-bold ${getScoreColor(report.score)}`}>
                       {report.score}
                     </div>
-                    <div className="text-sm text-gray-500">/ 100</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">/ 100</div>
                   </div>
                 </div>
 
                 {/* Score Breakdown */}
                 <div className="grid grid-cols-4 gap-4 mt-4">
                   {Object.entries(report.scoreBreakdown).map(([key, value]) => (
-                    <div key={key} className="bg-white p-3 rounded border">
-                      <div className="text-xs text-gray-500 uppercase mb-1">
+                    <div key={key} className="bg-white dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">
                         {key}
                       </div>
                       <div className={`text-2xl font-bold ${getScoreColor(value)}`}>
@@ -150,7 +150,7 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
 
               {/* Key Metrics */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Key Metrics</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Key Metrics</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <MetricCard
                     label="Avg Latency"
@@ -194,7 +194,7 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
               {/* Bottlenecks */}
               {report.bottlenecks.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Identified Bottlenecks ({report.bottlenecks.length})
                   </h3>
                   <div className="space-y-3">
@@ -210,7 +210,7 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
                               {bottleneck.severity}
                             </span>
                           </div>
-                          <span className="text-xs bg-white px-2 py-1 rounded">
+                          <span className="text-xs bg-white dark:bg-gray-700 px-2 py-1 rounded">
                             {bottleneck.type}
                           </span>
                         </div>
@@ -241,10 +241,10 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
               {/* AI Insights */}
               {aiInsights && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Analysis</h3>
-                  <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                    <div className="prose max-w-none">
-                      <div className="whitespace-pre-wrap text-gray-800">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h3>
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <div className="prose max-w-none dark:prose-invert">
+                      <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200">
                         {aiInsights}
                       </div>
                     </div>
@@ -268,10 +268,10 @@ interface MetricCardProps {
 
 function MetricCard({ label, value, icon, trend }: MetricCardProps) {
   const trendColors = {
-    good: 'text-green-600 bg-green-50 border-green-200',
-    warning: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    bad: 'text-red-600 bg-red-50 border-red-200',
-    neutral: 'text-gray-600 bg-gray-50 border-gray-200',
+    good: 'text-green-600 bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400',
+    warning: 'text-yellow-600 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-700 dark:text-yellow-400',
+    bad: 'text-red-600 bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-700 dark:text-red-400',
+    neutral: 'text-gray-600 bg-gray-50 border-gray-200 dark:bg-gray-700/30 dark:border-gray-600 dark:text-gray-400',
   };
 
   const trendIcons = {

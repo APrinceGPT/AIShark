@@ -156,12 +156,12 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
 
   const renderLayer = (title: string, data: Record<string, any>) => (
     <div className="mb-4">
-      <h3 className="font-semibold text-lg mb-2 text-gray-800">{title}</h3>
-      <div className="bg-gray-50 rounded p-3 space-y-1">
+      <h3 className="font-semibold text-base sm:text-lg mb-2 text-gray-800 dark:text-white">{title}</h3>
+      <div className="bg-gray-50 dark:bg-gray-700 rounded p-2 sm:p-3 space-y-1">
         {Object.entries(data).map(([key, value]) => (
-          <div key={key} className="flex text-sm">
-            <span className="font-medium text-gray-600 w-40">{key}:</span>
-            <span className="text-gray-800 flex-1 font-mono text-xs">
+          <div key={key} className="flex flex-col sm:flex-row text-sm gap-1 sm:gap-0">
+            <span className="font-medium text-gray-600 dark:text-gray-400 sm:w-40">{key}:</span>
+            <span className="text-gray-800 dark:text-gray-200 flex-1 font-mono text-xs break-all">
               {typeof value === 'object' ? JSON.stringify(value) : String(value)}
             </span>
           </div>
@@ -172,42 +172,43 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="packet-details-title"
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 id="packet-details-title" className="text-xl font-bold text-gray-800">
-            Packet #{packet.id + 1} Details
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b dark:border-gray-700">
+          <h2 id="packet-details-title" className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">
+            Packet #{packet.id + 1}
+            <span className="hidden sm:inline"> Details</span>
           </h2>
           <button
             onClick={onClose}
             aria-label="Close packet details"
-            className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl leading-none p-2"
           >
             ×
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4">
           {/* Quick Summary Card */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 text-sm">
               <div>
-                <span className="text-gray-600">Protocol:</span>
-                <span className="ml-2 font-bold text-blue-700">{packet.protocol}</span>
+                <span className="text-gray-600 dark:text-gray-400">Protocol:</span>
+                <span className="ml-2 font-bold text-blue-700 dark:text-blue-400">{packet.protocol}</span>
               </div>
               <div>
-                <span className="text-gray-600">Length:</span>
-                <span className="ml-2 font-bold text-blue-700">{packet.length} bytes</span>
+                <span className="text-gray-600 dark:text-gray-400">Length:</span>
+                <span className="ml-2 font-bold text-blue-700 dark:text-blue-400">{packet.length} bytes</span>
               </div>
-              <div className="col-span-2">
-                <span className="text-gray-600">Time:</span>
-                <span className="ml-2 font-mono text-xs text-blue-700">{packet.timeString}</span>
+              <div className="sm:col-span-2">
+                <span className="text-gray-600 dark:text-gray-400">Time:</span>
+                <span className="ml-2 font-mono text-xs text-blue-700 dark:text-blue-400 break-all">{packet.timeString}</span>
               </div>
             </div>
           </div>
@@ -264,32 +265,32 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
           {/* HTTP Layer */}
           {packet.layers.http && (
             <div className="mb-4">
-              <h3 className="font-semibold text-lg mb-2 text-gray-800">HTTP</h3>
-              <div className="bg-gray-50 rounded p-3 space-y-2">
+              <h3 className="font-semibold text-lg mb-2 text-gray-800 dark:text-white">HTTP</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 space-y-2">
                 {packet.layers.http.isRequest ? (
                   <>
                     <div className="text-sm">
-                      <span className="font-medium text-gray-600">Request:</span>
-                      <span className="ml-2 font-mono text-blue-600">
+                      <span className="font-medium text-gray-600 dark:text-gray-400">Request:</span>
+                      <span className="ml-2 font-mono text-blue-600 dark:text-blue-400">
                         {packet.layers.http.method} {packet.layers.http.uri}
                       </span>
                     </div>
                   </>
                 ) : (
                   <div className="text-sm">
-                    <span className="font-medium text-gray-600">Response:</span>
-                    <span className="ml-2 font-mono text-green-600">
+                    <span className="font-medium text-gray-600 dark:text-gray-400">Response:</span>
+                    <span className="ml-2 font-mono text-green-600 dark:text-green-400">
                       {packet.layers.http.statusCode} {packet.layers.http.statusText}
                     </span>
                   </div>
                 )}
                 
                 <div className="mt-2">
-                  <div className="font-medium text-sm text-gray-600 mb-1">Headers:</div>
-                  <div className="bg-white rounded p-2 max-h-40 overflow-y-auto">
+                  <div className="font-medium text-sm text-gray-600 dark:text-gray-400 mb-1">Headers:</div>
+                  <div className="bg-white dark:bg-gray-800 rounded p-2 max-h-40 overflow-y-auto">
                     {Object.entries(packet.layers.http.headers).map(([key, value]) => (
                       <div key={key} className="text-xs font-mono">
-                        <span className="text-blue-600">{key}:</span> {value}
+                        <span className="text-blue-600 dark:text-blue-400">{key}:</span> <span className="text-gray-800 dark:text-gray-200">{value}</span>
                       </div>
                     ))}
                   </div>
@@ -297,8 +298,8 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
 
                 {packet.layers.http.body && (
                   <div className="mt-2">
-                    <div className="font-medium text-sm text-gray-600 mb-1">Body:</div>
-                    <pre className="bg-white rounded p-2 text-xs overflow-x-auto max-h-40">
+                    <div className="font-medium text-sm text-gray-600 dark:text-gray-400 mb-1">Body:</div>
+                    <pre className="bg-white dark:bg-gray-800 rounded p-2 text-xs text-gray-800 dark:text-gray-200 overflow-x-auto max-h-40">
                       {packet.layers.http.body.substring(0, 500)}
                       {packet.layers.http.body.length > 500 && '...'}
                     </pre>
@@ -311,18 +312,18 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
           {/* DNS Layer */}
           {packet.layers.dns && (
             <div className="mb-4">
-              <h3 className="font-semibold text-lg mb-2 text-gray-800">DNS</h3>
-              <div className="bg-gray-50 rounded p-3 space-y-2">
+              <h3 className="font-semibold text-lg mb-2 text-gray-800 dark:text-white">DNS</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded p-3 space-y-2">
                 <div className="text-sm">
-                  <span className="font-medium text-gray-600">Type:</span>
-                  <span className="ml-2">{packet.layers.dns.isQuery ? 'Query' : 'Response'}</span>
+                  <span className="font-medium text-gray-600 dark:text-gray-400">Type:</span>
+                  <span className="ml-2 text-gray-800 dark:text-gray-200">{packet.layers.dns.isQuery ? 'Query' : 'Response'}</span>
                 </div>
                 
                 {packet.layers.dns.queries.length > 0 && (
                   <div>
-                    <div className="font-medium text-sm text-gray-600 mb-1">Queries:</div>
+                    <div className="font-medium text-sm text-gray-600 dark:text-gray-400 mb-1">Queries:</div>
                     {packet.layers.dns.queries.map((q, i) => (
-                      <div key={i} className="text-xs font-mono ml-4">
+                      <div key={i} className="text-xs font-mono ml-4 text-gray-800 dark:text-gray-200">
                         {q.name} ({q.type})
                       </div>
                     ))}
@@ -331,9 +332,9 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
                 
                 {packet.layers.dns.answers.length > 0 && (
                   <div>
-                    <div className="font-medium text-sm text-gray-600 mb-1">Answers:</div>
+                    <div className="font-medium text-sm text-gray-600 dark:text-gray-400 mb-1">Answers:</div>
                     {packet.layers.dns.answers.map((a, i) => (
-                      <div key={i} className="text-xs font-mono ml-4">
+                      <div key={i} className="text-xs font-mono ml-4 text-gray-800 dark:text-gray-200">
                         {a.name} → {a.data} (TTL: {a.ttl})
                       </div>
                     ))}
@@ -355,7 +356,7 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
           {sessionId && (
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-lg text-gray-800 flex items-center gap-2">
+                <h3 className="font-semibold text-lg text-gray-800 dark:text-white flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   Annotations
                 </h3>
@@ -383,23 +384,23 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
 
               {/* AI Suggestion Banner */}
               {aiSuggestion && !showAnnotationForm && (
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-lg p-4 mb-3">
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-3">
                   <div className="flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="font-medium text-sm text-purple-900 mb-1">AI Suggestion</div>
-                      <div className="text-sm text-gray-800 mb-2">"{aiSuggestion.annotation}"</div>
+                      <div className="font-medium text-sm text-purple-900 dark:text-purple-100 mb-1">AI Suggestion</div>
+                      <div className="text-sm text-gray-800 dark:text-gray-200 mb-2">"{aiSuggestion.annotation}"</div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                           aiSuggestion.severity === 'critical' 
-                            ? 'bg-red-100 text-red-800' 
+                            ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' 
                             : aiSuggestion.severity === 'warning'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-blue-100 text-blue-800'
+                            ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300'
+                            : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'
                         }`}>
                           {aiSuggestion.severity.toUpperCase()}
                         </span>
-                        <span className="text-xs text-gray-600">{aiSuggestion.reason}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">{aiSuggestion.reason}</span>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -410,7 +411,7 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
                         </button>
                         <button
                           onClick={handleDismissSuggestion}
-                          className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs"
+                          className="px-3 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500 text-xs"
                         >
                           Dismiss
                         </button>
@@ -422,29 +423,29 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
 
               {/* Annotation Form */}
               {showAnnotationForm && (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-3">
                   {aiSuggestion && (
-                    <div className="bg-purple-50 border border-purple-200 rounded p-2 mb-3 text-xs">
-                      <div className="flex items-center gap-1 text-purple-700 mb-1">
+                    <div className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded p-2 mb-3 text-xs">
+                      <div className="flex items-center gap-1 text-purple-700 dark:text-purple-300 mb-1">
                         <Sparkles className="w-3 h-3" />
                         <span className="font-medium">AI suggested this annotation</span>
                       </div>
-                      <div className="text-gray-600">{aiSuggestion.reason}</div>
+                      <div className="text-gray-600 dark:text-gray-400">{aiSuggestion.reason}</div>
                     </div>
                   )}
                   <textarea
                     value={annotationText}
                     onChange={(e) => setAnnotationText(e.target.value)}
                     placeholder="Add a note about this packet..."
-                    className="w-full p-2 border rounded-lg mb-2 text-sm"
+                    className="w-full p-2 border dark:border-gray-600 rounded-lg mb-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     rows={3}
                   />
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="text-sm font-medium text-gray-700">Severity:</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Severity:</label>
                     <select
                       value={annotationSeverity}
                       onChange={(e) => setAnnotationSeverity(e.target.value as 'info' | 'warning' | 'critical')}
-                      className="px-2 py-1 border rounded text-sm"
+                      className="px-2 py-1 border dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                     >
                       <option value="info">Info</option>
                       <option value="warning">Warning</option>
@@ -476,14 +477,14 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
 
               {/* Existing Annotations */}
               {loadingAnnotations ? (
-                <div className="text-sm text-gray-500">Loading annotations...</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Loading annotations...</div>
               ) : annotations.length > 0 ? (
                 <div className="space-y-2">
                   {annotations.map((annotation) => {
                     const severityColors = {
-                      info: 'bg-blue-50 border-blue-200 text-blue-800',
-                      warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-                      critical: 'bg-red-50 border-red-200 text-red-800',
+                      info: 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200',
+                      warning: 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200',
+                      critical: 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200',
                     };
                     const SeverityIcon = annotation.severity === 'critical' ? AlertCircle : Info;
 
@@ -523,14 +524,14 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
                   })}
                 </div>
               ) : (
-                <div className="text-sm text-gray-500 italic">No annotations yet. Add a note to bookmark this packet.</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 italic">No annotations yet. Add a note to bookmark this packet.</div>
               )}
             </div>
           )}
 
           {/* Raw Data */}
           <div className="mb-4">
-            <h3 className="font-semibold text-lg mb-2 text-gray-800">Raw Data</h3>
+            <h3 className="font-semibold text-lg mb-2 text-gray-800 dark:text-white">Raw Data</h3>
             <pre className="bg-gray-900 text-green-400 rounded p-3 text-xs overflow-x-auto max-h-60">
               {Array.from(packet.raw.slice(0, 256))
                 .map((b, i) => {

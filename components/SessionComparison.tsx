@@ -84,9 +84,9 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Loading comparison...</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-400 mt-4">Loading comparison...</p>
         </div>
       </div>
     );
@@ -95,11 +95,11 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
   if (!data.session1 || !data.session2) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md">
-          <p className="text-red-600 mb-4">Failed to load session data</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-md">
+          <p className="text-red-600 dark:text-red-400 mb-4">Failed to load session data</p>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           >
             Close
           </button>
@@ -124,16 +124,16 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <ArrowLeftRight className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Session Comparison</h2>
+            <ArrowLeftRight className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Session Comparison</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -143,17 +143,17 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
         <div className="flex-1 overflow-y-auto p-6">
           {/* Session Names */}
           <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
-              <h3 className="font-semibold text-blue-900 mb-1">{session1.session.name}</h3>
-              <p className="text-sm text-blue-700">{session1.session.file_name}</p>
-              <p className="text-xs text-blue-600 mt-1">
+            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border-2 border-blue-200 dark:border-blue-700">
+              <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-1">{session1.session.name}</h3>
+              <p className="text-sm text-blue-700 dark:text-blue-300">{session1.session.file_name}</p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                 {new Date(session1.session.created_at).toLocaleDateString()}
               </p>
             </div>
-            <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
-              <h3 className="font-semibold text-green-900 mb-1">{session2.session.name}</h3>
-              <p className="text-sm text-green-700">{session2.session.file_name}</p>
-              <p className="text-xs text-green-600 mt-1">
+            <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 border-2 border-green-200 dark:border-green-700">
+              <h3 className="font-semibold text-green-900 dark:text-green-200 mb-1">{session2.session.name}</h3>
+              <p className="text-sm text-green-700 dark:text-green-300">{session2.session.file_name}</p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                 {new Date(session2.session.created_at).toLocaleDateString()}
               </p>
             </div>
@@ -161,22 +161,22 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
 
           {/* Basic Statistics */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Statistics</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Statistics</h3>
             <div className="space-y-4">
               {/* Packet Count */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Packet Count</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Packet Count</span>
                   <DiffIndicator direction={packetDiff.direction} percentage={packetDiff.percentage} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-100 rounded">
-                    <p className="text-2xl font-bold text-blue-900">
+                  <div className="text-center p-3 bg-blue-100 dark:bg-blue-900/50 rounded">
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
                       {session1.session.packet_count.toLocaleString()}
                     </p>
                   </div>
-                  <div className="text-center p-3 bg-green-100 rounded">
-                    <p className="text-2xl font-bold text-green-900">
+                  <div className="text-center p-3 bg-green-100 dark:bg-green-900/50 rounded">
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-200">
                       {session2.session.packet_count.toLocaleString()}
                     </p>
                   </div>
@@ -184,19 +184,19 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
               </div>
 
               {/* File Size */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">File Size</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">File Size</span>
                   <DiffIndicator direction={sizeDiff.direction} percentage={sizeDiff.percentage} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-100 rounded">
-                    <p className="text-2xl font-bold text-blue-900">
+                  <div className="text-center p-3 bg-blue-100 dark:bg-blue-900/50 rounded">
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
                       {formatFileSize(session1.session.file_size)}
                     </p>
                   </div>
-                  <div className="text-center p-3 bg-green-100 rounded">
-                    <p className="text-2xl font-bold text-green-900">
+                  <div className="text-center p-3 bg-green-100 dark:bg-green-900/50 rounded">
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-200">
                       {formatFileSize(session2.session.file_size)}
                     </p>
                   </div>
@@ -207,8 +207,8 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
 
           {/* Protocol Distribution */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Protocol Distribution</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Protocol Distribution</h3>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
               <div className="space-y-3">
                 {allProtocols.map((protocol) => {
                   const count1 = session1.statistics.protocolDistribution[protocol] || 0;
@@ -216,19 +216,19 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
                   const diff = calculateDiff(count1, count2);
                   
                   return (
-                    <div key={protocol} className="border-b border-gray-200 last:border-0 pb-3 last:pb-0">
+                    <div key={protocol} className="border-b border-gray-200 dark:border-gray-600 last:border-0 pb-3 last:pb-0">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-gray-800">{protocol}</span>
+                        <span className="font-medium text-gray-800 dark:text-gray-200">{protocol}</span>
                         <DiffIndicator direction={diff.direction} percentage={diff.percentage} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between px-3 py-2 bg-blue-100 rounded">
-                          <span className="text-sm text-blue-700">Count:</span>
-                          <span className="font-semibold text-blue-900">{count1.toLocaleString()}</span>
+                        <div className="flex items-center justify-between px-3 py-2 bg-blue-100 dark:bg-blue-900/50 rounded">
+                          <span className="text-sm text-blue-700 dark:text-blue-300">Count:</span>
+                          <span className="font-semibold text-blue-900 dark:text-blue-200">{count1.toLocaleString()}</span>
                         </div>
-                        <div className="flex items-center justify-between px-3 py-2 bg-green-100 rounded">
-                          <span className="text-sm text-green-700">Count:</span>
-                          <span className="font-semibold text-green-900">{count2.toLocaleString()}</span>
+                        <div className="flex items-center justify-between px-3 py-2 bg-green-100 dark:bg-green-900/50 rounded">
+                          <span className="text-sm text-green-700 dark:text-green-300">Count:</span>
+                          <span className="font-semibold text-green-900 dark:text-green-200">{count2.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -241,10 +241,10 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
           {/* Errors Comparison */}
           {(session1.statistics.errors.retransmissions > 0 || session2.statistics.errors.retransmissions > 0) && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Network Issues</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Network Issues</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">TCP Retransmissions</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">TCP Retransmissions</span>
                   <DiffIndicator 
                     direction={calculateDiff(
                       session1.statistics.errors.retransmissions,
@@ -257,13 +257,13 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-100 rounded">
-                    <p className="text-2xl font-bold text-blue-900">
+                  <div className="text-center p-3 bg-blue-100 dark:bg-blue-900/50 rounded">
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-200">
                       {session1.statistics.errors.retransmissions}
                     </p>
                   </div>
-                  <div className="text-center p-3 bg-green-100 rounded">
-                    <p className="text-2xl font-bold text-green-900">
+                  <div className="text-center p-3 bg-green-100 dark:bg-green-900/50 rounded">
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-200">
                       {session2.statistics.errors.retransmissions}
                     </p>
                   </div>
@@ -274,10 +274,10 @@ export function SessionComparison({ session1Id, session2Id, onClose }: SessionCo
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t bg-gray-50">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+            className="px-6 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors font-medium"
           >
             Close
           </button>

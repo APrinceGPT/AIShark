@@ -171,10 +171,10 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 space-y-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <Bot className="w-6 h-6 text-blue-600" />
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <Bot className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           AI Insights
         </h2>
         <div className="flex gap-2">
@@ -213,18 +213,18 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800 text-sm">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-red-800 dark:text-red-300 text-sm">{error}</p>
         </div>
       )}
 
       {summary && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
             Capture Summary
           </h3>
-          <div className="prose prose-sm text-gray-700">
+          <div className="prose prose-sm text-gray-700 dark:text-gray-300">
             {onPacketClick ? (
               <FormattedAIResponse text={summary} onPacketClick={onPacketClick} />
             ) : (
@@ -235,12 +235,12 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
       )}
 
       {anomalies && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-          <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+        <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+          <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
             Anomaly Detection
           </h3>
-          <div className="prose prose-sm text-gray-700">
+          <div className="prose prose-sm text-gray-700 dark:text-gray-300">
             {onPacketClick ? (
               <FormattedAIResponse text={anomalies} onPacketClick={onPacketClick} />
             ) : (
@@ -251,15 +251,15 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
       )}
 
       {!summary && !anomalies && !error && packets.length > 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <FileSearch className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+          <FileSearch className="w-12 h-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
           <p className="mb-2">Get AI-powered insights about your capture</p>
           <p className="text-sm">Click the buttons above to analyze your packet data</p>
         </div>
       )}
 
       {packets.length === 0 && (
-        <div className="text-center py-8 text-gray-400">
+        <div className="text-center py-8 text-gray-400 dark:text-gray-500">
           <p>Upload a packet capture to enable AI analysis</p>
         </div>
       )}

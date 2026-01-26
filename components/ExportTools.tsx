@@ -62,12 +62,12 @@ export default function ExportTools({ packets, selectedPacketIds = [] }: ExportT
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 p-4">
-            <h3 className="font-semibold text-lg mb-4 text-gray-800">Export Options</h3>
+          <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 p-4">
+            <h3 className="font-semibold text-lg mb-4 text-gray-800 dark:text-gray-100">Export Options</h3>
 
             {/* Export Type */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Export Type
               </label>
               <div className="space-y-2">
@@ -79,7 +79,7 @@ export default function ExportTools({ packets, selectedPacketIds = [] }: ExportT
                     onChange={(e) => setExportType(e.target.value as 'all')}
                     className="mr-2"
                   />
-                  <span className="text-sm">All Packets ({packets.length})</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">All Packets ({packets.length})</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -90,7 +90,7 @@ export default function ExportTools({ packets, selectedPacketIds = [] }: ExportT
                     className="mr-2"
                     disabled={selectedPacketIds.length === 0}
                   />
-                  <span className={`text-sm ${selectedPacketIds.length === 0 ? 'text-gray-400' : ''}`}>
+                  <span className={`text-sm ${selectedPacketIds.length === 0 ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'}`}>
                     Selected Packets ({selectedPacketIds.length})
                   </span>
                 </label>
@@ -99,13 +99,13 @@ export default function ExportTools({ packets, selectedPacketIds = [] }: ExportT
 
             {/* Format Selection */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Format
               </label>
               <select
                 value={format}
                 onChange={(e) => setFormat(e.target.value as 'json' | 'csv' | 'txt')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="json">JSON</option>
                 <option value="csv">CSV</option>
@@ -125,7 +125,7 @@ export default function ExportTools({ packets, selectedPacketIds = [] }: ExportT
               {selectedPacketIds.length > 0 && (
                 <button
                   onClick={handleShare}
-                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors flex items-center justify-center gap-2"
+                  className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -135,7 +135,7 @@ export default function ExportTools({ packets, selectedPacketIds = [] }: ExportT
               )}
             </div>
 
-            <p className="text-xs text-gray-500 mt-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
               Export data includes all packet details and analysis results.
             </p>
           </div>
