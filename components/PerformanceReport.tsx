@@ -244,9 +244,7 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h3>
                   <div className="bg-blue-50 dark:bg-blue-900/30 p-6 rounded-lg border border-blue-200 dark:border-blue-700">
                     <div className="prose max-w-none dark:prose-invert">
-                      <div className="whitespace-pre-wrap text-gray-800 dark:text-gray-200">
-                        {aiInsights}
-                      </div>
+                      <FormattedAIResponse content={aiInsights} />
                     </div>
                   </div>
                 </div>

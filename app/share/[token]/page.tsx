@@ -6,6 +6,7 @@ import { FileText, Calendar, Eye, Clock, AlertCircle, CheckCircle, Info, Downloa
 import Statistics from '@/components/Statistics';
 import { PacketStatistics } from '@/types/packet';
 import { generatePDF, downloadPDF } from '@/lib/pdf-export';
+import FormattedAIResponse from '@/components/FormattedAIResponse';
 
 interface ShareData {
   share: {
@@ -310,7 +311,9 @@ export default function ShareViewPage() {
                       Q: {insight.question}
                     </p>
                   )}
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{insight.response}</p>
+                  <div className="text-sm text-gray-600">
+                    <FormattedAIResponse content={insight.response} />
+                  </div>
                   <p className="text-xs text-gray-400 mt-2">{formatDate(insight.created_at)}</p>
                 </div>
               ))}
