@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Configure Tailwind v4 - source paths for JIT */
+@config "../tailwind.config.ts";
 
 :root {
   --foreground-rgb: 0, 0, 0;
