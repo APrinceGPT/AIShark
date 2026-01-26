@@ -16,24 +16,33 @@ export default function PacketList({ packets, onPacketSelect, selectedPacketId }
   const containerRef = useRef<HTMLDivElement>(null);
   const { isMobile, isTablet } = useBreakpoint();
   const ROW_HEIGHT = isMobile ? 120 : 40;
+  const OVERSCAN = 5; // Number of extra rows to render above/below visible area
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
+    let ticking = false;
     const handleScroll = () => {
-      const scrollTop = container.scrollTop;
-      const start = Math.floor(scrollTop / ROW_HEIGHT);
-      const end = Math.min(start + Math.ceil(container.clientHeight / ROW_HEIGHT) + 10, packets.length);
-      
-      setVisibleRange({ start, end });
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollTop = container.scrollTop;
+          const visibleRows = Math.ceil(container.clientHeight / ROW_HEIGHT);
+          const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN);
+          const end = Math.min(start + visibleRows + OVERSCAN * 2, packets.length);
+          
+          setVisibleRange({ start, end });
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Initial calculation
 
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [packets.length]);
+  }, [packets.length, ROW_HEIGHT]);
 
   const getProtocolColor = (protocol: string): string => {
     const colors: Record<string, string> = {
