@@ -286,11 +286,7 @@ export default function PredictiveInsights({
                     AI Predictive Insights
                   </h3>
                   <div className="text-purple-800 dark:text-purple-300 text-sm prose prose-sm dark:prose-invert">
-                    {onPacketClick ? (
-                      <FormattedAIResponse text={aiInsights} onPacketClick={onPacketClick} />
-                    ) : (
-                      <div className="whitespace-pre-wrap">{aiInsights}</div>
-                    )}
+                    <FormattedAIResponse content={aiInsights} onPacketClick={onPacketClick} />
                   </div>
                 </div>
               )}

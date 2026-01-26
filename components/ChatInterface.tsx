@@ -174,8 +174,8 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
               }`}
             >
-              {msg.role === 'assistant' && onPacketClick ? (
-                <FormattedAIResponse text={msg.content} onPacketClick={onPacketClick} />
+              {msg.role === 'assistant' ? (
+                <FormattedAIResponse content={msg.content} onPacketClick={onPacketClick} />
               ) : (
                 <p className="whitespace-pre-wrap">{msg.content}</p>
               )}
