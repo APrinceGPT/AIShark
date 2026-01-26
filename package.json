@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
@@ -31,6 +32,7 @@
     "react-joyride": "^3.0.0-7"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.5",
     "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
