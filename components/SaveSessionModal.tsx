@@ -72,16 +72,16 @@ export default function SaveSessionModal({ isOpen, onClose, data, onSaved }: Sav
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Save className="w-6 h-6" />
             Save Analysis Session
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -90,7 +90,7 @@ export default function SaveSessionModal({ isOpen, onClose, data, onSaved }: Sav
         {/* Content */}
         <div className="p-6">
           <div className="mb-4">
-            <label htmlFor="sessionName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="sessionName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Session Name
             </label>
             <input
@@ -98,32 +98,32 @@ export default function SaveSessionModal({ isOpen, onClose, data, onSaved }: Sav
               type="text"
               value={sessionName}
               onChange={(e) => setSessionName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500 dark:placeholder-gray-400"
               placeholder="Enter a descriptive name..."
               autoFocus
             />
           </div>
 
           {/* Session Info */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">File:</span>
-              <span className="font-medium text-gray-900">{data.fileName}</span>
+              <span className="text-gray-600 dark:text-gray-400">File:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{data.fileName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Size:</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-gray-600 dark:text-gray-400">Size:</span>
+              <span className="font-medium text-gray-900 dark:text-white">
                 {(data.fileSize / (1024 * 1024)).toFixed(2)} MB
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Packets:</span>
-              <span className="font-medium text-gray-900">{data.packets.length.toLocaleString()}</span>
+              <span className="text-gray-600 dark:text-gray-400">Packets:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{data.packets.length.toLocaleString()}</span>
             </div>
           </div>
 
           {/* Note */}
-          <p className="mt-4 text-xs text-gray-500">
+          <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
             Note: Statistics and analysis results will be saved. PCAP file can be uploaded separately if needed.
           </p>
 
@@ -131,7 +131,7 @@ export default function SaveSessionModal({ isOpen, onClose, data, onSaved }: Sav
           <div className="flex gap-3 mt-6">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
             >
               Cancel
             </button>

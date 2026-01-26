@@ -141,10 +141,16 @@ export function formatBytes(bytes: number): string {
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+}
+
+export function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(2)}s`;
+  return `${(ms / 60000).toFixed(2)}m`;
 }
 
 export function formatTimestamp(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toISOString().replace('T', ' ').substring(0, 23);
+  const date = new Date(timestamp * 1000);
+  return date.toTimeString().split(' ')[0];
 }

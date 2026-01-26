@@ -45,11 +45,11 @@ const FilterBar = forwardRef<HTMLInputElement, FilterBarProps>(
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 p-4">
+    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
       <div className="max-w-7xl mx-auto space-y-4">
         {/* Quick Protocol Filters */}
         <div className="flex flex-wrap gap-2">
-          <span className="text-sm font-medium text-gray-700 self-center mr-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 self-center mr-2">
             Quick Filters:
           </span>
           {commonProtocols.map(protocol => {
@@ -68,8 +68,8 @@ const FilterBar = forwardRef<HTMLInputElement, FilterBarProps>(
                   ${isActive 
                     ? 'bg-blue-500 text-white' 
                     : count > 0 
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                      : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600' 
+                      : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }
                 `}
               >
@@ -82,7 +82,7 @@ const FilterBar = forwardRef<HTMLInputElement, FilterBarProps>(
             <button
               onClick={handleClearFilters}
               aria-label="Clear all filters"
-              className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 hover:bg-red-200"
+              className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
             >
               Clear All
             </button>
@@ -102,9 +102,9 @@ const FilterBar = forwardRef<HTMLInputElement, FilterBarProps>(
                 updateFilter({ searchTerm: e.target.value });
               }}
               aria-label="Search packets by IP, port, or content"
-              className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="absolute left-3 top-2.5 w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -118,7 +118,7 @@ const FilterBar = forwardRef<HTMLInputElement, FilterBarProps>(
               updateFilter({ sourceIP: e.target.value });
             }}
             aria-label="Filter by source IP address"
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           
           <input
@@ -130,7 +130,7 @@ const FilterBar = forwardRef<HTMLInputElement, FilterBarProps>(
               updateFilter({ destinationIP: e.target.value });
             }}
             aria-label="Filter by destination IP address"
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>

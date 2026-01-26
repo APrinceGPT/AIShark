@@ -53,8 +53,8 @@ export default function FileUpload({ onFileUpload, isProcessing }: FileUploadPro
         onDrop={handleDrop}
         className={`
           border-4 border-dashed rounded-lg p-12 text-center transition-all
-          ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-white'}
-          ${isProcessing ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:border-blue-400'}
+          ${isDragging ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'}
+          ${isProcessing ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:border-blue-400 dark:hover:border-blue-500'}
         `}
       >
         <input
@@ -69,7 +69,7 @@ export default function FileUpload({ onFileUpload, isProcessing }: FileUploadPro
         <label htmlFor="file-upload" className="cursor-pointer">
           <div className="flex flex-col items-center gap-4">
             <svg
-              className="w-16 h-16 text-gray-400"
+              className="w-16 h-16 text-gray-400 dark:text-gray-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -83,15 +83,15 @@ export default function FileUpload({ onFileUpload, isProcessing }: FileUploadPro
             </svg>
             
             <div>
-              <p className="text-xl font-semibold text-gray-700">
+              <p className="text-xl font-semibold text-gray-700 dark:text-gray-200">
                 {isProcessing ? 'Processing...' : 'Drop PCAP file here'}
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 or click to browse
               </p>
             </div>
             
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400 dark:text-gray-500">
               Supports .pcap, .pcapng files (max 100MB recommended for browser processing)
             </p>
           </div>
@@ -101,7 +101,7 @@ export default function FileUpload({ onFileUpload, isProcessing }: FileUploadPro
       {isProcessing && (
         <div className="mt-6 text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Parsing packet capture file...
           </p>
         </div>

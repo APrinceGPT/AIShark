@@ -184,10 +184,10 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Remediation Guide</h2>
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Remediation Guide</h2>
           <div className="flex gap-2">
             <button
               onClick={exportRunbook}
@@ -197,7 +197,7 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
             </button>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -212,15 +212,15 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
           {(sections['Root Cause'] || sections['Impact Assessment']) && (
             <div className="grid md:grid-cols-2 gap-4">
               {sections['Root Cause'] && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h3 className="font-bold text-red-900 mb-2">Root Cause</h3>
-                  <p className="text-red-800 whitespace-pre-wrap">{sections['Root Cause']}</p>
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
+                  <h3 className="font-bold text-red-900 dark:text-red-200 mb-2">Root Cause</h3>
+                  <p className="text-red-800 dark:text-red-300 whitespace-pre-wrap">{sections['Root Cause']}</p>
                 </div>
               )}
               {sections['Impact Assessment'] && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <h3 className="font-bold text-orange-900 mb-2">Impact Assessment</h3>
-                  <p className="text-orange-800 whitespace-pre-wrap">{sections['Impact Assessment']}</p>
+                <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
+                  <h3 className="font-bold text-orange-900 dark:text-orange-200 mb-2">Impact Assessment</h3>
+                  <p className="text-orange-800 dark:text-orange-300 whitespace-pre-wrap">{sections['Impact Assessment']}</p>
                 </div>
               )}
             </div>
@@ -228,22 +228,22 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
 
           {/* Evidence */}
           {sections['Evidence'] && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="font-bold text-blue-900 mb-2">Evidence</h3>
-              <p className="text-blue-800 whitespace-pre-wrap">{sections['Evidence']}</p>
+            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+              <h3 className="font-bold text-blue-900 dark:text-blue-200 mb-2">Evidence</h3>
+              <p className="text-blue-800 dark:text-blue-300 whitespace-pre-wrap">{sections['Evidence']}</p>
             </div>
           )}
 
           {/* Remediation Steps */}
           {remediationSections.length > 0 && (
             <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-900">Remediation Steps</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Remediation Steps</h3>
               {remediationSections.map((section, sectionIdx) => (
-                <div key={sectionIdx} className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
-                    <h4 className="font-semibold text-gray-900">{section.title}</h4>
+                <div key={sectionIdx} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">{section.title}</h4>
                     {section.timeEstimate && (
-                      <p className="text-sm text-gray-600 mt-1">⏱️ {section.timeEstimate}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">⏱️ {section.timeEstimate}</p>
                     )}
                   </div>
                   <div className="p-4 space-y-3">
@@ -254,7 +254,7 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
                         <div
                           key={stepIdx}
                           className={`border rounded p-3 ${
-                            isCompleted ? 'bg-green-50 border-green-300' : 'bg-white border-gray-300'
+                            isCompleted ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700' : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600'
                           }`}
                         >
                           <div className="flex items-start gap-3">
@@ -265,7 +265,7 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
                               className="mt-1 h-5 w-5 text-green-600"
                             />
                             <div className="flex-1">
-                              <p className={`font-medium ${isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                              <p className={`font-medium ${isCompleted ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                                 {step.title}
                               </p>
                               {step.command && (
@@ -280,12 +280,12 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
                                 </div>
                               )}
                               {step.expectedResult && (
-                                <p className="mt-2 text-sm text-gray-600">
+                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                                   <strong>Expected:</strong> {step.expectedResult}
                                 </p>
                               )}
                               {step.verification && (
-                                <p className="mt-1 text-sm text-gray-600">
+                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                                   <strong>Verify:</strong> {step.verification}
                                 </p>
                               )}
@@ -302,13 +302,13 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
 
           {/* Verification Checklist */}
           {checklist.length > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="font-bold text-green-900 mb-3">Verification Checklist</h3>
+            <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4">
+              <h3 className="font-bold text-green-900 dark:text-green-200 mb-3">Verification Checklist</h3>
               <ul className="space-y-2">
                 {checklist.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <span className="text-green-700">✓</span>
-                    <span className="text-green-800">{item}</span>
+                    <span className="text-green-700 dark:text-green-400">✓</span>
+                    <span className="text-green-800 dark:text-green-300">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -318,26 +318,26 @@ export default function RemediationGuide({ analysis, onClose }: RemediationGuide
           {/* Monitoring & Prevention */}
           <div className="grid md:grid-cols-2 gap-4">
             {sections['Monitoring Recommendations'] && (
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <h3 className="font-bold text-purple-900 mb-2">Monitoring</h3>
-                <p className="text-purple-800 whitespace-pre-wrap text-sm">{sections['Monitoring Recommendations']}</p>
+              <div className="bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
+                <h3 className="font-bold text-purple-900 dark:text-purple-200 mb-2">Monitoring</h3>
+                <p className="text-purple-800 dark:text-purple-300 whitespace-pre-wrap text-sm">{sections['Monitoring Recommendations']}</p>
               </div>
             )}
             {sections['Prevention'] && (
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                <h3 className="font-bold text-indigo-900 mb-2">Prevention</h3>
-                <p className="text-indigo-800 whitespace-pre-wrap text-sm">{sections['Prevention']}</p>
+              <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700 rounded-lg p-4">
+                <h3 className="font-bold text-indigo-900 dark:text-indigo-200 mb-2">Prevention</h3>
+                <p className="text-indigo-800 dark:text-indigo-300 whitespace-pre-wrap text-sm">{sections['Prevention']}</p>
               </div>
             )}
           </div>
 
           {/* Technical Analysis (collapsible) */}
           {sections['Technical Analysis'] && (
-            <details className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <summary className="font-semibold text-gray-900 cursor-pointer">
+            <details className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+              <summary className="font-semibold text-gray-900 dark:text-white cursor-pointer">
                 Technical Analysis (Click to expand)
               </summary>
-              <p className="text-gray-700 whitespace-pre-wrap mt-3 text-sm">{sections['Technical Analysis']}</p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap mt-3 text-sm">{sections['Technical Analysis']}</p>
             </details>
           )}
         </div>

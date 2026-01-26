@@ -111,16 +111,16 @@ export default function AIPacketAssistant({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-[60]">
+    <div className="fixed bottom-4 right-4 w-96 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[60]">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-purple-50 to-blue-50">
+      <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-600" />
-          <h3 className="font-semibold text-gray-800">AI Assistant</h3>
+          <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          <h3 className="font-semibold text-gray-800 dark:text-gray-100">AI Assistant</h3>
         </div>
         <button
           onClick={() => setIsVisible(false)}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
           aria-label="Close AI assistant"
         >
           <X className="w-5 h-5" />
@@ -129,38 +129,38 @@ export default function AIPacketAssistant({
 
       {/* Content */}
       <div className="p-4">
-        <div className="text-xs text-gray-500 mb-2">
+        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
           Packet #{selectedPacket.id + 1} • {selectedPacket.protocol}
         </div>
 
         {loading && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>Analyzing packet...</span>
           </div>
         )}
 
         {error && (
-          <div className="text-sm text-red-600 bg-red-50 p-3 rounded border border-red-200">
+          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 p-3 rounded border border-red-200 dark:border-red-800">
             {error}
           </div>
         )}
 
         {!loading && !error && analysis && (
-          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
             {analysis}
           </div>
         )}
 
         {!loading && !error && !analysis && (
-          <div className="text-sm text-gray-500 italic">
+          <div className="text-sm text-gray-500 dark:text-gray-400 italic">
             Analyzing packet...
           </div>
         )}
       </div>
 
       {/* Footer tip */}
-      <div className="px-4 py-2 bg-gray-50 text-xs text-gray-500 border-t">
+      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
         💡 Tip: AI analyzes packets after 1 second delay
       </div>
     </div>

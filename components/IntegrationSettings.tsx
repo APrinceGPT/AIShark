@@ -137,19 +137,19 @@ export default function IntegrationSettings({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <Settings className="w-8 h-8 text-blue-600" />
+            <Settings className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Monitoring Integrations</h2>
-              <p className="text-sm text-gray-600">Export data to external monitoring systems</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Monitoring Integrations</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Export data to external monitoring systems</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -164,16 +164,16 @@ export default function IntegrationSettings({
               {/* Prometheus Card */}
               <button
                 onClick={() => setSelectedIntegration('prometheus')}
-                className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 dark:hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all text-left"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <Download className="w-8 h-8 text-orange-600" />
-                  <h3 className="text-xl font-semibold text-gray-900">Prometheus</h3>
+                  <Download className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Prometheus</h3>
                 </div>
-                <p className="text-gray-600 text-sm mb-3">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
                   Export network metrics in Prometheus exposition format for time-series monitoring and alerting.
                 </p>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                   <li>• Packet count metrics</li>
                   <li>• Protocol distribution</li>
                   <li>• Traffic volume statistics</li>
@@ -184,16 +184,16 @@ export default function IntegrationSettings({
               {/* Webhook Card */}
               <button
                 onClick={() => setSelectedIntegration('webhook')}
-                className="p-6 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all text-left"
+                className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-green-500 dark:hover:border-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 transition-all text-left"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <Send className="w-8 h-8 text-green-600" />
-                  <h3 className="text-xl font-semibold text-gray-900">Webhook</h3>
+                  <Send className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Webhook</h3>
                 </div>
-                <p className="text-gray-600 text-sm mb-3">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
                   Send JSON-formatted analysis data to custom webhook endpoints for real-time alerts and integrations.
                 </p>
-                <ul className="text-sm text-gray-700 space-y-1">
+                <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                   <li>• Capture summary</li>
                   <li>• Security alerts</li>
                   <li>• Anomaly notifications</li>
@@ -213,17 +213,17 @@ export default function IntegrationSettings({
                 ← Back to integrations
               </button>
 
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
+              <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
+                <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-2 flex items-center gap-2">
                   <Download className="w-5 h-5" />
                   Prometheus Metrics Export
                 </h3>
-                <p className="text-orange-800 text-sm mb-4">
+                <p className="text-orange-800 dark:text-orange-300 text-sm mb-4">
                   Download metrics in Prometheus format. You can use these metrics with your Prometheus server
                   or any compatible monitoring system.
                 </p>
 
-                <div className="bg-white rounded p-3 mb-4 font-mono text-xs text-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded p-3 mb-4 font-mono text-xs text-gray-700 dark:text-gray-300">
                   <div># Sample metrics included:</div>
                   <div>network_packets_total {'{}'}{packets.length}</div>
                   <div>network_traffic_bytes_total {'{}'}{packets.reduce((sum, p) => sum + p.length, 0)}</div>
@@ -252,16 +252,16 @@ export default function IntegrationSettings({
               {testResult && (
                 <div className={`border rounded-lg p-4 ${
                   testResult.success 
-                    ? 'bg-green-50 border-green-300' 
-                    : 'bg-red-50 border-red-300'
+                    ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700' 
+                    : 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700'
                 }`}>
                   <div className="flex items-center gap-2">
                     {testResult.success ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                     ) : (
-                      <AlertCircle className="w-5 h-5 text-red-600" />
+                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                     )}
-                    <span className={testResult.success ? 'text-green-900' : 'text-red-900'}>
+                    <span className={testResult.success ? 'text-green-900 dark:text-green-200' : 'text-red-900 dark:text-red-200'}>
                       {testResult.message}
                     </span>
                   </div>
@@ -280,19 +280,19 @@ export default function IntegrationSettings({
                 ← Back to integrations
               </button>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+              <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                <h3 className="font-semibold text-green-900 dark:text-green-200 mb-2 flex items-center gap-2">
                   <Send className="w-5 h-5" />
                   Webhook Configuration
                 </h3>
-                <p className="text-green-800 text-sm mb-4">
+                <p className="text-green-800 dark:text-green-300 text-sm mb-4">
                   Send network analysis data to your webhook endpoint. Payload will be sent as JSON with capture
                   information, alerts, and statistics.
                 </p>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Webhook URL *
                     </label>
                     <input
@@ -300,18 +300,18 @@ export default function IntegrationSettings({
                       value={webhookUrl}
                       onChange={(e) => setWebhookUrl(e.target.value)}
                       placeholder="https://your-endpoint.com/webhook"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Event Type
                     </label>
                     <select
                       value={webhookEventType}
                       onChange={(e) => setWebhookEventType(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     >
                       <option value="network.analysis.complete">network.analysis.complete</option>
                       <option value="network.security.alert">network.security.alert</option>
@@ -343,16 +343,16 @@ export default function IntegrationSettings({
               {testResult && (
                 <div className={`border rounded-lg p-4 ${
                   testResult.success 
-                    ? 'bg-green-50 border-green-300' 
-                    : 'bg-red-50 border-red-300'
+                    ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700' 
+                    : 'bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700'
                 }`}>
                   <div className="flex items-center gap-2">
                     {testResult.success ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                     ) : (
-                      <AlertCircle className="w-5 h-5 text-red-600" />
+                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                     )}
-                    <span className={testResult.success ? 'text-green-900' : 'text-red-900'}>
+                    <span className={testResult.success ? 'text-green-900 dark:text-green-200' : 'text-red-900 dark:text-red-200'}>
                       {testResult.message}
                     </span>
                   </div>
@@ -364,8 +364,8 @@ export default function IntegrationSettings({
 
         {/* Footer */}
         {!selectedIntegration && (
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <p className="text-sm text-gray-600 text-center">
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
               {packets.length > 0 
                 ? `Ready to export ${packets.length} packets` 
                 : 'Upload a capture file to enable integrations'}
