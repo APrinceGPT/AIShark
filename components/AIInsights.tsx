@@ -225,11 +225,7 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
             Capture Summary
           </h3>
           <div className="prose prose-sm text-gray-700 dark:text-gray-300">
-            {onPacketClick ? (
-              <FormattedAIResponse text={summary} onPacketClick={onPacketClick} />
-            ) : (
-              <div className="whitespace-pre-wrap">{summary}</div>
-            )}
+            <FormattedAIResponse content={summary} onPacketClick={onPacketClick} />
           </div>
         </div>
       )}
@@ -241,11 +237,7 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
             Anomaly Detection
           </h3>
           <div className="prose prose-sm text-gray-700 dark:text-gray-300">
-            {onPacketClick ? (
-              <FormattedAIResponse text={anomalies} onPacketClick={onPacketClick} />
-            ) : (
-              <div className="whitespace-pre-wrap">{anomalies}</div>
-            )}
+            <FormattedAIResponse content={anomalies} onPacketClick={onPacketClick} />
           </div>
         </div>
       )}

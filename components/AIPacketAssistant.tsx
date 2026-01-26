@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Packet } from '@/types/packet';
 import { aiCache } from '@/lib/ai-cache';
 import { X, Sparkles, Loader2 } from 'lucide-react';
+import FormattedAIResponse from './FormattedAIResponse';
 
 interface AIPacketAssistantProps {
   selectedPacket: Packet | null;
@@ -147,8 +148,8 @@ export default function AIPacketAssistant({
         )}
 
         {!loading && !error && analysis && (
-          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-            {analysis}
+          <div className="text-sm">
+            <FormattedAIResponse content={analysis} />
           </div>
         )}
 
