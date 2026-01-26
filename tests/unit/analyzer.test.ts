@@ -5,13 +5,13 @@ import { Packet } from '@/types/packet';
 const createMockPacket = (overrides: Partial<Packet> = {}): Packet => ({
   id: 1,
   timestamp: Date.now() / 1000,
+  timeString: new Date().toISOString(),
   source: '192.168.1.1',
   destination: '192.168.1.2',
   protocol: 'TCP',
   length: 100,
   info: 'Test packet',
-  details: '',
-  rawData: '',
+  raw: new Uint8Array(0),
   layers: {},
   ...overrides,
 });
@@ -133,7 +133,7 @@ describe('Analyzer - performAnalysis', () => {
             destinationPort: 443,
             sequenceNumber: 1,
             acknowledgmentNumber: 1,
-            dataOffset: 5,
+            windowSize: 65535,
             flags: {
               fin: false,
               syn: false,
