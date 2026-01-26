@@ -5,13 +5,13 @@ import { Packet } from '@/types/packet';
 const createMockPacket = (overrides: Partial<Packet> = {}): Packet => ({
   id: 1,
   timestamp: Date.now() / 1000,
+  timeString: new Date().toISOString(),
   source: '192.168.1.1',
   destination: '8.8.8.8',
   protocol: 'UDP',
   length: 100,
   info: 'Test packet',
-  details: '',
-  rawData: '',
+  raw: new Uint8Array(0),
   layers: {},
   ...overrides,
 });
