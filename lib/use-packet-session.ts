@@ -35,6 +35,40 @@ interface UploadOptions {
 const DEFAULT_CHUNK_SIZE = 1000;
 
 /**
+ * Sanitize string to remove invalid Unicode escape sequences
+ * PostgreSQL JSONB cannot handle certain Unicode escape sequences
+ */
+function sanitizeString(str: string): string {
+  // Remove null bytes and other control characters that break JSONB
+  // Also remove invalid Unicode surrogate pairs
+  return str
+    .replace(/\u0000/g, '') // Null bytes
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // Control chars except \t, \n, \r
+    .replace(/[\uD800-\uDFFF]/g, '') // Surrogate pairs (invalid in JSON)
+    .replace(/\\u[0-9a-fA-F]{0,3}(?![0-9a-fA-F])/g, ''); // Incomplete unicode escapes
+}
+
+/**
+ * Recursively sanitize all strings in an object
+ */
+function sanitizeObject(obj: unknown): unknown {
+  if (typeof obj === 'string') {
+    return sanitizeString(obj);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeObject);
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      sanitized[key] = sanitizeObject(value);
+    }
+    return sanitized;
+  }
+  return obj;
+}
+
+/**
  * Optimize packet for upload by trimming large data
  * This reduces the packet size significantly while keeping essential data
  */
@@ -45,9 +79,13 @@ function optimizePacketForUpload(packet: Packet): Record<string, unknown> {
   // Create optimized packet object
   const optimized: Record<string, unknown> = { ...packetWithoutRaw };
   
-  // Trim info if it's too long
-  if (typeof optimized.info === 'string' && (optimized.info as string).length > 500) {
-    optimized.info = (optimized.info as string).substring(0, 500) + '...';
+  // Trim and sanitize info if it's too long
+  if (typeof optimized.info === 'string') {
+    let info = optimized.info as string;
+    if (info.length > 500) {
+      info = info.substring(0, 500) + '...';
+    }
+    optimized.info = sanitizeString(info);
   }
   
   // Deep copy and optimize layers
@@ -68,7 +106,8 @@ function optimizePacketForUpload(packet: Packet): Record<string, unknown> {
       layers.http = http;
     }
     
-    optimized.layers = layers;
+    // Sanitize all layer data
+    optimized.layers = sanitizeObject(layers);
   }
   
   return optimized;
