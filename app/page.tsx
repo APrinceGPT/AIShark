@@ -29,6 +29,7 @@ import { useAuth } from '@/lib/auth-context';
 import { loadSession } from '@/lib/session-manager';
 import { Save, History, LogIn } from 'lucide-react';
 import { useKeyboardShortcuts } from '@/lib/use-keyboard-shortcuts';
+import SampleDownloads from '@/components/SampleDownloads';
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal';
 import MobileNav from '@/components/MobileNav';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -553,8 +554,13 @@ export default function Home() {
               </div>
 
               {/* File Upload */}
-              <div className="mb-16" data-tour="upload-section">
+              <div className="mb-8" data-tour="upload-section">
                 <FileUpload onFileUpload={handleFileUpload} isProcessing={isProcessing} />
+              </div>
+
+              {/* Sample Downloads */}
+              <div className="mb-16">
+                <SampleDownloads />
               </div>
 
               {/* Features Grid */}

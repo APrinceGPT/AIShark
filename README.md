@@ -11,7 +11,13 @@ A powerful, AI-enhanced PCAP/PCAPNG packet analyzer built with Next.js 16. Analy
 [![Playwright](https://img.shields.io/badge/Playwright-13%20E2E-blue?logo=playwright)](https://playwright.dev/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 🚀 What's New in Phase 6 (January 2026)
+## 🚀 What's New in Phase 6 (February 2026)
+
+### 📥 Sample PCAP Downloads ✨ NEW
+- **Demo-ready samples** - 4 sample PCAP files available for download directly from homepage
+- **No Wireshark required** - Users can test AIShark without generating their own captures
+- **Protocol variety** - DNS, HTTP, and SMTP traffic samples included
+- **One-click download** - Simple download buttons with file descriptions and sizes
 
 ### ⚡ Major Framework Upgrades
 - **Next.js 16.1** with Turbopack for faster builds
@@ -79,6 +85,12 @@ A powerful, AI-enhanced PCAP/PCAPNG packet analyzer built with Next.js 16. Analy
 **Documentation:** [View Improvement Plan](IMPROVEMENT_PLAN.md) | [Keyboard Shortcuts](KEYBOARD_SHORTCUTS.md) | [API Docs](docs/API.md)
 
 ## ✨ Features
+
+### 📥 Sample PCAP Files ✨ NEW
+- **Demo-Ready Samples** - Download sample PCAP files directly from the homepage
+- **No Wireshark Needed** - Test AIShark's full capabilities without generating captures
+- **Protocol Variety** - DNS, HTTP, and SMTP traffic samples included
+- **Quick Start** - Download, upload, and analyze in seconds
 
 ### 🤖 AI-Powered Analysis (Phases 1 & 2 Complete)
 - **Intelligent Summaries** - Claude AI generates comprehensive capture analysis with optimized token usage
@@ -744,6 +756,6 @@ If you find this project helpful, please consider giving it a star ⭐
 
 **Built with ❤️ for network engineers, security professionals, and DevOps teams**
 
-**Status:** Phase 1, 2 & 3 Complete ✅ | Active Development | Production Ready
+**Status:** Phase 6 Complete ✅ | Active Development | Production Ready
 
-*Last Updated: January 21, 2026*
+*Last Updated: February 3, 2026*

@@ -66,6 +66,8 @@ next-env.d.ts
 ehthumbs.db
 Desktop.ini
 
-# PCAP test files (optional - remove if you want to include sample files)
+# PCAP test files (exclude large test files but allow public samples)
 *.pcap
 *.pcapng
+!public/samples/*.pcap
+!public/samples/*.pcapng
