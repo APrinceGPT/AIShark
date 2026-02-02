@@ -32,7 +32,47 @@ interface UploadOptions {
   onError?: (error: string) => void;
 }
 
-const DEFAULT_CHUNK_SIZE = 2000;
+const DEFAULT_CHUNK_SIZE = 500;
+
+/**
+ * Optimize packet for upload by trimming large data
+ * This reduces the packet size significantly while keeping essential data
+ */
+function optimizePacketForUpload(packet: Packet): Record<string, unknown> {
+  // Create a shallow copy without the raw Uint8Array (which is very large)
+  const { raw, ...packetWithoutRaw } = packet;
+  
+  // Create optimized packet object
+  const optimized: Record<string, unknown> = { ...packetWithoutRaw };
+  
+  // Trim info if it's too long
+  if (typeof optimized.info === 'string' && (optimized.info as string).length > 500) {
+    optimized.info = (optimized.info as string).substring(0, 500) + '...';
+  }
+  
+  // Deep copy and optimize layers
+  if (packet.layers) {
+    const layers: Record<string, unknown> = { ...packet.layers };
+    
+    // Trim TCP payload if present
+    if (packet.layers.tcp?.payload) {
+      layers.tcp = { ...packet.layers.tcp, payload: undefined };
+    }
+    
+    // Trim HTTP body if too large
+    if (packet.layers.http) {
+      const http = { ...packet.layers.http };
+      if (http.body && typeof http.body === 'string' && http.body.length > 500) {
+        http.body = http.body.substring(0, 500) + '... [truncated]';
+      }
+      layers.http = http;
+    }
+    
+    optimized.layers = layers;
+  }
+  
+  return optimized;
+}
 
 /**
  * Hook for managing packet session uploads to Supabase
@@ -111,7 +151,8 @@ export function usePacketSession(options: UploadOptions = {}) {
 
         const start = i * chunkSize;
         const end = Math.min(start + chunkSize, packets.length);
-        const chunkPackets = packets.slice(start, end);
+        // Optimize packets before upload to reduce payload size
+        const chunkPackets = packets.slice(start, end).map(optimizePacketForUpload);
         const isLastChunk = i === totalChunks - 1;
 
         const response: Response = await fetch('/api/packets/upload', {
@@ -133,8 +174,19 @@ export function usePacketSession(options: UploadOptions = {}) {
         });
 
         if (!response.ok) {
-          const errorData = await response.json() as { error?: string };
-          throw new Error(errorData.error || 'Upload failed');
+          // Handle 413 Payload Too Large specifically
+          if (response.status === 413) {
+            throw new Error('Chunk too large. Try with a smaller file or contact support.');
+          }
+          let errorMessage = 'Upload failed';
+          try {
+            const errorData = await response.json() as { error?: string };
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            // Response wasn't JSON (common with 413 errors)
+            errorMessage = `Upload failed with status ${response.status}`;
+          }
+          throw new Error(errorMessage);
         }
 
         const result = await response.json() as { success: boolean; sessionId?: string; error?: string };
