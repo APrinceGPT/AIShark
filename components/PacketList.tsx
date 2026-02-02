@@ -85,9 +85,9 @@ export default function PacketList({ packets, onPacketSelect, selectedPacketId }
       </div>
       
       <div className="flex items-center gap-2 mb-1 text-sm">
-        <span className="font-mono text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{packet.source}</span>
-        <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-        <span className="font-mono text-gray-700 dark:text-gray-300 truncate max-w-[120px]">{packet.destination}</span>
+        <span className="font-mono text-gray-700 dark:text-gray-300 truncate max-w-30">{packet.source}</span>
+        <ArrowRight className="w-4 h-4 text-gray-400 shrink-0" />
+        <span className="font-mono text-gray-700 dark:text-gray-300 truncate max-w-30">{packet.destination}</span>
         <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{packet.length}B</span>
       </div>
       

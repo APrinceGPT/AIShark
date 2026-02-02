@@ -85,11 +85,11 @@ export default function AISemanticSearch({
   };
 
   return (
-    <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-b border-purple-200 dark:border-purple-800 p-4">
+    <div className="bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-b border-purple-200 dark:border-purple-800 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
           {/* Icon and Label */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             <span className="text-sm font-semibold text-purple-900 dark:text-purple-200">AI Search:</span>
           </div>
@@ -151,7 +151,7 @@ export default function AISemanticSearch({
         {showResults && lastResult && lastResult.count > 0 && (
           <div className="mt-3 bg-white dark:bg-gray-800 border-2 border-purple-300 dark:border-purple-700 rounded-lg p-3">
             <div className="flex items-start gap-2">
-              <Search className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+              <Search className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5 shrink-0" />
               <div className="flex-1">
                 <div className="font-medium text-sm text-purple-900 dark:text-purple-200">
                   Found {lastResult.count} packet{lastResult.count !== 1 ? 's' : ''}

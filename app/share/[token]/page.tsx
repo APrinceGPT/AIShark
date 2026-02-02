@@ -77,7 +77,7 @@ export default function ShareViewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Loading shared analysis...</p>
@@ -88,7 +88,7 @@ export default function ShareViewPage() {
 
   if (error || !shareData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Unable to Load Share</h1>
@@ -184,7 +184,7 @@ export default function ShareViewPage() {
   } : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -261,7 +261,7 @@ export default function ShareViewPage() {
         </div>
 
         {/* Share Info Card */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="bg-linear-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-blue-600 mt-0.5" />
             <div className="flex-1">
@@ -361,7 +361,7 @@ export default function ShareViewPage() {
         )}
 
         {/* Footer CTA */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-center text-white">
+        <div className="bg-linear-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-center text-white">
           <h3 className="text-2xl font-bold mb-2">Want to analyze your own packet captures?</h3>
           <p className="mb-6 text-blue-100">
             Upload PCAP files and get AI-powered insights in seconds

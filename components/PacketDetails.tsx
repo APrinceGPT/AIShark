@@ -196,7 +196,7 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4">
           {/* Quick Summary Card */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800">
+          <div className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 text-sm">
               <div>
                 <span className="text-gray-600 dark:text-gray-400">Protocol:</span>
@@ -384,9 +384,9 @@ export default function PacketDetails({ packet, onClose, sessionId }: PacketDeta
 
               {/* AI Suggestion Banner */}
               {aiSuggestion && !showAnnotationForm && (
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-3">
+                <div className="bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border-2 border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-3">
                   <div className="flex items-start gap-3">
-                    <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                    <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 shrink-0" />
                     <div className="flex-1">
                       <div className="font-medium text-sm text-purple-900 dark:text-purple-100 mb-1">AI Suggestion</div>
                       <div className="text-sm text-gray-800 dark:text-gray-200 mb-2">"{aiSuggestion.annotation}"</div>

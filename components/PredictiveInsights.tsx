@@ -170,7 +170,7 @@ export default function PredictiveInsights({
           {prediction && (
             <div className="space-y-6">
               {/* Risk Score Overview */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border border-purple-200 dark:border-purple-700 rounded-lg p-6">
+              <div className="bg-linear-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 border border-purple-200 dark:border-purple-700 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Overall Risk Assessment</h3>

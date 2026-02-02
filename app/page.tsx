@@ -452,7 +452,7 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-gray-900 text-white shadow-lg">
+      <header className="bg-linear-to-r from-blue-600 to-blue-700 dark:from-gray-800 dark:to-gray-900 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Mobile Navigation */}
@@ -506,7 +506,7 @@ export default function Home() {
               <>
                 <button
                   onClick={() => setShowShortcutsModal(true)}
-                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
+                  className="p-2 bg-white/20 hover:bg-white/40 hover:scale-105 text-white rounded-lg transition-all duration-200 border border-white/30 hover:border-white/50"
                   aria-label="Show keyboard shortcuts"
                   title="Keyboard shortcuts (Ctrl+/)"
                 >
@@ -516,10 +516,10 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => setEnableAIAssistant(!enableAIAssistant)}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 border ${
                     enableAIAssistant
-                      ? 'bg-yellow-400 text-white hover:bg-yellow-500'
-                      : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+                      ? 'bg-yellow-400 text-white hover:bg-yellow-500 border-yellow-300'
+                      : 'bg-white/20 hover:bg-white/40 text-white border-white/30 hover:border-white/50'
                   }`}
                   aria-label="Toggle AI Packet Assistant"
                   title={`AI Packet Assistant ${enableAIAssistant ? 'On' : 'Off'}`}
@@ -531,7 +531,7 @@ export default function Home() {
                 {user && !currentSession.isFromDatabase && (
                   <button
                     onClick={handleSaveSession}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 font-medium"
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 hover:scale-105 transition-all duration-200 flex items-center gap-2 font-medium shadow-sm hover:shadow-md"
                   >
                     <Save className="w-5 h-5" />
                     <span className="hidden xl:inline">Save Session</span>
@@ -539,7 +539,7 @@ export default function Home() {
                 )}
                 <button
                   onClick={handleNewUpload}
-                  className="px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 font-medium"
+                  className="px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 hover:scale-105 transition-all duration-200 flex items-center gap-2 font-medium shadow-sm hover:shadow-md"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -554,7 +554,7 @@ export default function Home() {
               <button
                 data-tour="sign-in"
                 onClick={() => setShowAuthModal(true)}
-                className="px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 font-medium"
+                className="px-4 py-2 bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 hover:scale-105 transition-all duration-200 flex items-center gap-2 font-medium shadow-sm hover:shadow-md"
               >
                 <LogIn className="w-5 h-5" />
                 <span className="hidden xl:inline">Sign In</span>
@@ -567,11 +567,11 @@ export default function Home() {
       {/* Main Content */}
       <div className="flex-1">
         {allPackets.length === 0 ? (
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+          <div className="bg-linear-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
             {/* Hero Section */}
             <div className="max-w-7xl mx-auto px-4 pt-16 pb-12">
               <div className="text-center mb-12">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-6">
                   <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
@@ -639,7 +639,7 @@ export default function Home() {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">What You Can Do</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
                       <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -651,7 +651,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
                       <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -663,7 +663,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
                       <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -675,7 +675,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
                       <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -687,7 +687,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
                       <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -699,7 +699,7 @@ export default function Home() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
+                    <div className="shrink-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-1">
                       <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
