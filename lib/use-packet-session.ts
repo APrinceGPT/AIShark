@@ -32,7 +32,7 @@ interface UploadOptions {
   onError?: (error: string) => void;
 }
 
-const DEFAULT_CHUNK_SIZE = 500;
+const DEFAULT_CHUNK_SIZE = 1000;
 
 /**
  * Optimize packet for upload by trimming large data
