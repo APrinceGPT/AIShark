@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import FileUpload from '@/components/FileUpload';
 import FilterBar from '@/components/FilterBar';
 import AdvancedFilterBar from '@/components/AdvancedFilterBar';
-import PacketList from '@/components/PacketList';
+import PacketList, { PacketListHandle } from '@/components/PacketList';
 import PacketDetails from '@/components/PacketDetails';
 import Statistics from '@/components/Statistics';
 import AnalysisReport from '@/components/AnalysisReport';
@@ -21,6 +21,8 @@ import AISemanticSearch from '@/components/AISemanticSearch';
 import PerformanceReport from '@/components/PerformanceReport';
 import PredictiveInsights from '@/components/PredictiveInsights';
 import IntegrationSettings from '@/components/IntegrationSettings';
+import SharkAIAssistant from '@/components/SharkAIAssistant';
+import UploadProgressBar from '@/components/UploadProgressBar';
 import { toast } from '@/components/ToastContainer';
 import { Packet, PacketFilter, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { calculateStatistics, performAnalysis } from '@/lib/analyzer';
@@ -35,6 +37,10 @@ import MobileNav from '@/components/MobileNav';
 import ThemeToggle from '@/components/ThemeToggle';
 import OnboardingTour from '@/components/OnboardingTour';
 import { trackFileUpload, trackAnalysisComplete, trackSessionSave, trackOnboardingComplete } from '@/lib/analytics';
+import { usePacketSession } from '@/lib/use-packet-session';
+
+// Threshold for using Supabase storage (packets above this count trigger upload)
+const LARGE_FILE_THRESHOLD = 500;
 
 interface SessionData {
   sessionId?: string;
@@ -60,11 +66,13 @@ export default function Home() {
   const [showPerformanceReport, setShowPerformanceReport] = useState(false);
   const [showPredictiveInsights, setShowPredictiveInsights] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
+  const [showSharkAI, setShowSharkAI] = useState(false);
   const [enableAIAssistant, setEnableAIAssistant] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [currentSession, setCurrentSession] = useState<SessionData>({ isFromDatabase: false });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const packetListRef = useRef<PacketListHandle | null>(null);
   
   // AI Semantic Search state
   const [aiSearchActive, setAiSearchActive] = useState(false);
@@ -80,6 +88,25 @@ export default function Home() {
   }>>([]);
   
   const workerRef = useRef<Worker | null>(null);
+
+  // Packet session hook for large file uploads to Supabase
+  const { 
+    sessionId: packetSessionId, 
+    isUploaded: isPacketSessionUploaded,
+    progress: uploadProgress,
+    uploadPackets,
+    cleanupSession,
+    resetState: resetPacketSession,
+  } = usePacketSession({
+    onComplete: (sessionId) => {
+      console.log('Packet session uploaded:', sessionId);
+      toast.success('Packets uploaded for AI analysis');
+    },
+    onError: (error) => {
+      console.error('Packet session upload failed:', error);
+      toast.error('Failed to upload packets for AI analysis');
+    },
+  });
 
   useEffect(() => {
     // Check if user is visiting for the first time
@@ -225,6 +252,19 @@ export default function Home() {
           });
           setProtocolCounts(counts);
 
+          // Upload to Supabase for large files (enables AI analysis on Vercel)
+          if (packets.length > LARGE_FILE_THRESHOLD) {
+            console.log(`Large file detected (${packets.length} packets), uploading to Supabase...`);
+            uploadPackets(
+              packets,
+              file.name,
+              file.size,
+              stats,
+              analysisResult,
+              user?.id
+            );
+          }
+
           // Save to captures history for comparison
           if (stats && analysisResult) {
             setCaptures(prev => [...prev, {
@@ -271,6 +311,12 @@ export default function Home() {
   }, []);
 
   const handleNewUpload = useCallback(() => {
+    // Cleanup packet session from Supabase
+    if (packetSessionId) {
+      cleanupSession();
+    }
+    resetPacketSession();
+    
     // Reset to upload screen
     setAllPackets([]);
     setFilteredPackets([]);
@@ -281,7 +327,7 @@ export default function Home() {
     setCurrentView('packets');
     setUploadedFile(null);
     setCurrentSession({ isFromDatabase: false });
-  }, []);
+  }, [packetSessionId, cleanupSession, resetPacketSession]);
 
   const handleGoHome = useCallback(() => {
     // If there are packets loaded, show confirmation
@@ -355,6 +401,58 @@ export default function Home() {
     setShowOnboarding(false);
   }, []);
 
+  // Error packet navigation helpers
+  const errorPackets = useMemo(() => {
+    return filteredPackets.filter(p => p.flags?.hasError || p.flags?.isRetransmission);
+  }, [filteredPackets]);
+
+  const currentErrorIndex = useMemo(() => {
+    if (!selectedPacket || errorPackets.length === 0) return 0;
+    const index = errorPackets.findIndex(p => p.id === selectedPacket.id);
+    return index >= 0 ? index + 1 : 0;
+  }, [selectedPacket, errorPackets]);
+
+  const handleNextError = useCallback(() => {
+    if (errorPackets.length === 0) {
+      toast.error('No error packets found');
+      return;
+    }
+    const currentIdx = selectedPacket ? errorPackets.findIndex(p => p.id === selectedPacket.id) : -1;
+    const nextIndex = (currentIdx + 1) % errorPackets.length;
+    setSelectedPacket(errorPackets[nextIndex]);
+  }, [errorPackets, selectedPacket]);
+
+  const handlePrevError = useCallback(() => {
+    if (errorPackets.length === 0) {
+      toast.error('No error packets found');
+      return;
+    }
+    const currentIdx = selectedPacket ? errorPackets.findIndex(p => p.id === selectedPacket.id) : -1;
+    const prevIndex = currentIdx <= 0 ? errorPackets.length - 1 : currentIdx - 1;
+    setSelectedPacket(errorPackets[prevIndex]);
+  }, [errorPackets, selectedPacket]);
+
+  // Navigation handlers for keyboard shortcuts
+  const handleArrowUp = useCallback(() => {
+    if (filteredPackets.length === 0) return;
+    const currentIdx = selectedPacket ? filteredPackets.findIndex(p => p.id === selectedPacket.id) : -1;
+    if (currentIdx > 0) {
+      setSelectedPacket(filteredPackets[currentIdx - 1]);
+    } else if (currentIdx === -1 && filteredPackets.length > 0) {
+      setSelectedPacket(filteredPackets[0]);
+    }
+  }, [filteredPackets, selectedPacket]);
+
+  const handleArrowDown = useCallback(() => {
+    if (filteredPackets.length === 0) return;
+    const currentIdx = selectedPacket ? filteredPackets.findIndex(p => p.id === selectedPacket.id) : -1;
+    if (currentIdx < filteredPackets.length - 1) {
+      setSelectedPacket(filteredPackets[currentIdx + 1]);
+    } else if (currentIdx === -1 && filteredPackets.length > 0) {
+      setSelectedPacket(filteredPackets[0]);
+    }
+  }, [filteredPackets, selectedPacket]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onSearch: () => {
@@ -371,31 +469,17 @@ export default function Home() {
     onHelp: () => setShowShortcutsModal(prev => !prev),
     onAIAssistant: () => {
       if (allPackets.length > 0) {
-        setCurrentView('ai-chat');
+        setShowSharkAI(prev => !prev);
       } else {
         toast.error('Upload a PCAP file first to use AI features');
       }
     },
-    onNextError: () => {
-      const errorPackets = filteredPackets.filter(p => p.flags?.hasError || p.flags?.isRetransmission);
-      if (errorPackets.length === 0) {
-        toast.error('No error packets found');
-        return;
-      }
-      const currentIndex = selectedPacket ? errorPackets.findIndex(p => p.id === selectedPacket.id) : -1;
-      const nextIndex = (currentIndex + 1) % errorPackets.length;
-      setSelectedPacket(errorPackets[nextIndex]);
-    },
-    onPrevError: () => {
-      const errorPackets = filteredPackets.filter(p => p.flags?.hasError || p.flags?.isRetransmission);
-      if (errorPackets.length === 0) {
-        toast.error('No error packets found');
-        return;
-      }
-      const currentIndex = selectedPacket ? errorPackets.findIndex(p => p.id === selectedPacket.id) : -1;
-      const prevIndex = currentIndex <= 0 ? errorPackets.length - 1 : currentIndex - 1;
-      setSelectedPacket(errorPackets[prevIndex]);
-    },
+    onNextError: handleNextError,
+    onPrevError: handlePrevError,
+    onHome: () => packetListRef.current?.scrollToTop(),
+    onEnd: () => packetListRef.current?.scrollToBottom(),
+    onArrowUp: handleArrowUp,
+    onArrowDown: handleArrowDown,
   });
 
   const handleFilterChange = useCallback((filter: PacketFilter | AdvancedFilter) => {
@@ -860,6 +944,12 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Upload Progress Bar (for large files) */}
+            <UploadProgressBar 
+              progress={uploadProgress} 
+              packetCount={allPackets.length} 
+            />
+
             {/* Content Area */}
             {currentView === 'packets' && (
               <>
@@ -867,6 +957,7 @@ export default function Home() {
                   allPackets={allPackets}
                   onSearchResults={handleAISearchResults}
                   onClearSearch={handleClearAISearch}
+                  sessionId={packetSessionId}
                 />
                 <AdvancedFilterBar 
                   ref={searchInputRef}
@@ -874,9 +965,13 @@ export default function Home() {
                   protocolCounts={protocolCounts}
                 />
                 <PacketList
+                  ref={packetListRef}
                   packets={filteredPackets}
                   onPacketSelect={setSelectedPacket}
                   selectedPacketId={selectedPacket?.id}
+                  onNextError={handleNextError}
+                  onPrevError={handlePrevError}
+                  currentErrorIndex={currentErrorIndex}
                 />
               </>
             )}
@@ -903,6 +998,7 @@ export default function Home() {
                   statistics={statistics}
                   analysis={analysis}
                   onPacketClick={handlePacketClick}
+                  sessionId={packetSessionId}
                 />
               </div>
             )}
@@ -914,6 +1010,7 @@ export default function Home() {
                   statistics={statistics}
                   analysis={analysis}
                   onPacketClick={handlePacketClick}
+                  sessionId={packetSessionId}
                 />
               </div>
             )}
@@ -1028,6 +1125,30 @@ export default function Home() {
       <OnboardingTour
         run={showOnboarding}
         onFinish={handleOnboardingFinish}
+      />
+
+      {/* SharkAI Floating Toggle Button */}
+      {allPackets.length > 0 && !showSharkAI && (
+        <button
+          onClick={() => setShowSharkAI(true)}
+          className="fixed bottom-4 left-4 z-40 flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg transition-all hover:scale-105"
+          title="Open SharkAI Assistant (A)"
+        >
+          <span className="text-lg">🦈</span>
+          <span className="font-medium">SharkAI</span>
+        </button>
+      )}
+
+      {/* SharkAI Floating Assistant */}
+      <SharkAIAssistant
+        isOpen={showSharkAI}
+        onClose={() => setShowSharkAI(false)}
+        packets={allPackets}
+        selectedPacket={selectedPacket}
+        statistics={statistics}
+        analysis={analysis}
+        onPacketClick={handlePacketClick}
+        sessionId={packetSessionId}
       />
     </main>
   );

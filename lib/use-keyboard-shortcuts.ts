@@ -13,6 +13,13 @@ export interface KeyboardShortcutCallbacks {
   onNextError?: () => void;
   onPrevError?: () => void;
   onAIAssistant?: () => void;
+  // Navigation shortcuts
+  onPageUp?: () => void;
+  onPageDown?: () => void;
+  onHome?: () => void;
+  onEnd?: () => void;
+  onArrowUp?: () => void;
+  onArrowDown?: () => void;
 }
 
 /**
@@ -74,6 +81,48 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
         callbacks.onAIAssistant?.();
         return;
       }
+
+      // Page Up: Go to previous page (only when not in input)
+      if (event.key === 'PageUp' && !isInput) {
+        event.preventDefault();
+        callbacks.onPageUp?.();
+        return;
+      }
+
+      // Page Down: Go to next page (only when not in input)
+      if (event.key === 'PageDown' && !isInput) {
+        event.preventDefault();
+        callbacks.onPageDown?.();
+        return;
+      }
+
+      // Home: Jump to first packet (only when not in input)
+      if (event.key === 'Home' && !isInput && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        callbacks.onHome?.();
+        return;
+      }
+
+      // End: Jump to last packet (only when not in input)
+      if (event.key === 'End' && !isInput && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        callbacks.onEnd?.();
+        return;
+      }
+
+      // Arrow Up: Select previous packet (only when not in input)
+      if (event.key === 'ArrowUp' && !isInput && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        callbacks.onArrowUp?.();
+        return;
+      }
+
+      // Arrow Down: Select next packet (only when not in input)
+      if (event.key === 'ArrowDown' && !isInput && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        callbacks.onArrowDown?.();
+        return;
+      }
     },
     [callbacks]
   );
@@ -98,11 +147,17 @@ export function getModifierKey(): string {
  * Keyboard shortcuts help data
  */
 export const KEYBOARD_SHORTCUTS = [
-  { keys: [`${getModifierKey()}+F`], description: 'Focus search' },
-  { keys: [`${getModifierKey()}+S`], description: 'Save session' },
-  { keys: [`${getModifierKey()}+/`], description: 'Show keyboard shortcuts' },
-  { keys: ['Esc'], description: 'Close modals' },
-  { keys: ['N'], description: 'Next error packet' },
-  { keys: ['P'], description: 'Previous error packet' },
-  { keys: ['A'], description: 'Open AI assistant' },
+  { keys: [`${getModifierKey()}+F`], description: 'Focus search', category: 'General' },
+  { keys: [`${getModifierKey()}+S`], description: 'Save session', category: 'General' },
+  { keys: [`${getModifierKey()}+/`], description: 'Show keyboard shortcuts', category: 'General' },
+  { keys: ['Esc'], description: 'Close modals', category: 'General' },
+  { keys: ['A'], description: 'Open AI assistant', category: 'AI' },
+  { keys: ['N'], description: 'Next error packet', category: 'Errors' },
+  { keys: ['P'], description: 'Previous error packet', category: 'Errors' },
+  { keys: ['Home'], description: 'Jump to first packet', category: 'Navigation' },
+  { keys: ['End'], description: 'Jump to last packet', category: 'Navigation' },
+  { keys: ['Page Up'], description: 'Previous page', category: 'Navigation' },
+  { keys: ['Page Down'], description: 'Next page', category: 'Navigation' },
+  { keys: ['↑'], description: 'Select previous packet', category: 'Navigation' },
+  { keys: ['↓'], description: 'Select next packet', category: 'Navigation' },
 ];

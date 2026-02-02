@@ -13,7 +13,31 @@ A powerful, AI-enhanced PCAP/PCAPNG packet analyzer built with Next.js 16. Analy
 
 ## 🚀 What's New in Phase 6 (February 2026)
 
-### 📥 Sample PCAP Downloads ✨ NEW
+### ☁️ Large File Support (Supabase Storage) ✨ NEW
+- **11,000+ Packet Files** - Full AI analysis for large captures (bypasses Vercel 4.5MB limit)
+- **Chunked Upload** - Automatic splitting into 2000-packet chunks
+- **Session-Based AI** - Packets stored temporarily in Supabase, queries use session ID
+- **Progress Indicator** - Inline banner shows upload progress for large files
+- **Auto-Cleanup** - Sessions deleted on tab close, manual clear, or 1-hour timeout
+- **Anonymous Support** - Works for both authenticated and anonymous users
+- **Cost Efficient** - Single AI call with full context vs. multiple chunked calls
+
+### 🦈 SharkAI Floating Assistant ✨ NEW
+- **Floating Chat Window** - Draggable AI assistant that stays visible while browsing packets
+- **Context-Aware** - Automatically includes selected packet context in questions
+- **Quick Actions** - "Ask about this packet" button for instant analysis
+- **Minimize/Maximize** - Collapse to icon or expand for full view
+- **Keyboard Shortcut** - Press `A` to toggle SharkAI visibility
+
+### 🧭 Enhanced Navigation Toolbar ✨ NEW
+- **Floating Navigation** - Fixed toolbar for large packet lists (bottom-right)
+- **Page Navigation** - Jump to Top, Bottom, Previous/Next page controls
+- **Configurable Page Size** - 100, 500, 1000 (default), or 10000 packets per page
+- **Go to Packet** - Jump directly to any packet by number
+- **Error Navigation** - Previous/Next error buttons with error count badge
+- **Keyboard Shortcuts** - Home, End, Page Up, Page Down, Arrow keys
+
+### 📥 Sample PCAP Downloads
 - **Demo-ready samples** - 4 sample PCAP files available for download directly from homepage
 - **No Wireshark required** - Users can test AIShark without generating their own captures
 - **Protocol variety** - DNS, HTTP, and SMTP traffic samples included
@@ -93,6 +117,7 @@ A powerful, AI-enhanced PCAP/PCAPNG packet analyzer built with Next.js 16. Analy
 - **Quick Start** - Download, upload, and analyze in seconds
 
 ### 🤖 AI-Powered Analysis (Phases 1 & 2 Complete)
+- **Large File Support** - AI analysis for 11,000+ packet captures via Supabase temporary storage ✨ NEW
 - **Intelligent Summaries** - Claude AI generates comprehensive capture analysis with optimized token usage
 - **Anomaly Detection** - Automatically identifies suspicious network patterns with adaptive sampling
 - **Natural Language Queries** - Ask questions in plain English about your captures
@@ -624,9 +649,24 @@ Press `Ctrl+/` or `Cmd+/` to view all shortcuts anytime.
 **Most Used:**
 - `Ctrl+F` - Focus search
 - `Ctrl+S` - Save session
-- `A` - Open AI assistant
+- `A` - Toggle SharkAI assistant
 - `N`/`P` - Jump to error packets
+- `Home`/`End` - Jump to first/last packet
+- `Page Up`/`Page Down` - Navigate pages
+- `↑`/`↓` - Select previous/next packet
 - `Esc` - Close any modal
+
+## 🔮 Future Updates
+
+The following features are planned for future releases:
+
+### Mini-map / Overview Scrollbar
+- **Visual overview** - A compact scrollbar that shows the entire packet list structure
+- **Color-coded markers** - Highlights for errors, selected packets, and protocol distribution
+- **Click-to-jump** - Click anywhere on the mini-map to navigate instantly
+- **Hover preview** - Shows packet info on hover before jumping
+
+*This feature is documented for future implementation as part of the enhanced navigation experience.*
 
 ## 📈 Roadmap
 

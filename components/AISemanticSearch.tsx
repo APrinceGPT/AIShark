@@ -9,6 +9,7 @@ interface AISemanticSearchProps {
   allPackets: Packet[];
   onSearchResults: (packetIds: number[], explanation: string) => void;
   onClearSearch: () => void;
+  sessionId?: string | null;
 }
 
 interface SearchResult {
@@ -20,7 +21,8 @@ interface SearchResult {
 export default function AISemanticSearch({ 
   allPackets, 
   onSearchResults,
-  onClearSearch 
+  onClearSearch,
+  sessionId,
 }: AISemanticSearchProps) {
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -37,13 +39,15 @@ export default function AISemanticSearch({
     setShowResults(false);
 
     try {
+      // Use sessionId if available (for large files), otherwise send packets directly
+      const requestBody = sessionId
+        ? { query: query.trim(), sessionId }
+        : { query: query.trim(), packets: allPackets };
+
       const response = await fetch('/api/analyze/semantic-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: query.trim(),
-          packets: allPackets,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {

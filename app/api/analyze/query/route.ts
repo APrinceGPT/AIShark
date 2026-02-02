@@ -7,15 +7,17 @@ import {
 import { QUERY_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import { getPacketSession } from '@/lib/packet-session';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 interface QueryRequest {
   question: string;
-  packets: Packet[];
+  packets?: Packet[];
   statistics: PacketStatistics | null;
   analysis: AnalysisResult | null;
+  sessionId?: string;
 }
 
 /**
@@ -25,7 +27,7 @@ interface QueryRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: QueryRequest = await request.json();
-    const { question, packets, statistics, analysis } = body;
+    let { question, packets, statistics, analysis, sessionId } = body;
 
     if (!question || question.trim().length === 0) {
       return NextResponse.json(
@@ -34,9 +36,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // If sessionId is provided, fetch data from Supabase
+    if (sessionId && (!packets || packets.length === 0)) {
+      const sessionResult = await getPacketSession(sessionId);
+      if (!sessionResult.success || !sessionResult.session) {
+        return NextResponse.json(
+          { error: sessionResult.error || 'Session not found' },
+          { status: 404 }
+        );
+      }
+      packets = sessionResult.session.packets;
+      // Use stored statistics/analysis if not provided
+      if (!statistics && sessionResult.session.statistics) {
+        statistics = sessionResult.session.statistics;
+      }
+      if (!analysis && sessionResult.session.analysis) {
+        analysis = sessionResult.session.analysis;
+      }
+    }
+
     if (!packets || packets.length === 0) {
       return NextResponse.json(
-        { error: 'No packets provided' },
+        { error: 'No packets provided (provide packets array or sessionId)' },
         { status: 400 }
       );
     }
@@ -44,8 +65,8 @@ export async function POST(request: NextRequest) {
     // Prepare optimized context
     const { context: fullContext, metrics } = prepareOptimizedContext(
       packets, 
-      statistics, 
-      analysis,
+      statistics || null, 
+      analysis || null,
       3500 // Lower for queries to leave room for question
     );
     

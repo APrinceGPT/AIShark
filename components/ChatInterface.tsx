@@ -10,6 +10,7 @@ interface ChatInterfaceProps {
   statistics: PacketStatistics | null;
   analysis: AnalysisResult | null;
   onPacketClick?: (packetId: number) => void;
+  sessionId?: string | null;
 }
 
 interface Message {
@@ -18,7 +19,7 @@ interface Message {
   timestamp: number;
 }
 
-export default function ChatInterface({ packets, statistics, analysis, onPacketClick }: ChatInterfaceProps) {
+export default function ChatInterface({ packets, statistics, analysis, onPacketClick, sessionId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -63,15 +64,15 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
         return;
       }
 
+      // Use sessionId if available (for large files), otherwise send packets directly
+      const requestBody = sessionId
+        ? { question, sessionId, statistics, analysis }
+        : { question, packets, statistics, analysis };
+
       const response = await fetch('/api/analyze/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question,
-          packets,
-          statistics,
-          analysis,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -125,7 +126,7 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
   ];
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col h-[600px]">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col h-150">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">💬 Ask AI</h2>

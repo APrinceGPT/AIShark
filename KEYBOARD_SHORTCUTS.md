@@ -20,9 +20,20 @@ Quick reference guide for keyboard shortcuts in AIShark.
 
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `A` | **AI Assistant** | Open AI chat interface for queries |
+| `A` | **SharkAI Assistant** | Toggle the floating SharkAI chat window |
 
 ## Packet Navigation
+
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Home` | **Jump to Top** | Scroll to the first packet in the list |
+| `End` | **Jump to Bottom** | Scroll to the last packet in the list |
+| `Page Up` | **Previous Page** | Navigate to the previous page of packets |
+| `Page Down` | **Next Page** | Navigate to the next page of packets |
+| `↑` (Arrow Up) | **Previous Packet** | Select the previous packet in the list |
+| `↓` (Arrow Down) | **Next Packet** | Select the next packet in the list |
+
+## Error Navigation
 
 | Shortcut | Action | Description |
 |----------|--------|-------------|
@@ -35,7 +46,9 @@ Quick reference guide for keyboard shortcuts in AIShark.
 - **Quick Save**: Use `Ctrl+S` / `Cmd+S` to save your work without reaching for the mouse
 - **Escape Everything**: Press `Esc` to close any modal - works on packet details, save dialog, shortcuts help, etc.
 - **Error Hunting**: Use `N` and `P` to quickly navigate through problematic packets
-- **AI on Demand**: Press `A` to instantly open the AI chat interface when you need analysis
+- **SharkAI on Demand**: Press `A` to toggle the floating AI assistant for instant analysis
+- **Large Files**: Use `Page Up` / `Page Down` to quickly navigate through large packet captures
+- **Arrow Navigation**: Use `↑` and `↓` to step through packets one at a time
 
 ## Accessibility
 
@@ -45,14 +58,14 @@ All interactive elements support keyboard navigation:
 - Use arrow keys to navigate lists
 - Screen reader support with ARIA labels
 
-## Future Shortcuts (Coming Soon)
+## Navigation Toolbar
 
-The following shortcuts are planned for future releases:
-- Arrow keys for packet list navigation
-- Number keys for quick view switching
-- Ctrl+Z/Y for undo/redo filters
-- Ctrl+E for export current view
+The floating navigation toolbar (bottom-right corner) provides additional controls:
+- **Top/Bottom buttons** - Jump to first/last packet
+- **Page controls** - Previous/next page navigation
+- **Page indicator** - Shows current page and total pages
+- **Page size selector** - Choose 100, 500, 1000, or 10000 packets per page
+- **Go to packet** - Jump directly to any packet by number
+- **Error navigation** - Previous/next error with error count badge
 
----
-
-*Press `Ctrl+/` or `Cmd+/` at any time to view this guide in the app*
+*The toolbar can be minimized to save screen space and expanded when needed.*

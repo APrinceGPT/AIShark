@@ -1,22 +1,91 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, useImperativeHandle, forwardRef } from 'react';
 import { Packet } from '@/types/packet';
 import { useBreakpoint } from '@/lib/use-media-query';
 import { Clock, ArrowRight, AlertCircle } from 'lucide-react';
+import PacketNavigationToolbar from './PacketNavigationToolbar';
 
 interface PacketListProps {
   packets: Packet[];
   onPacketSelect: (packet: Packet) => void;
   selectedPacketId?: number;
+  onNextError?: () => void;
+  onPrevError?: () => void;
+  currentErrorIndex?: number;
 }
 
-export default function PacketList({ packets, onPacketSelect, selectedPacketId }: PacketListProps) {
+export interface PacketListHandle {
+  scrollToPacket: (packetNumber: number) => void;
+  scrollToTop: () => void;
+  scrollToBottom: () => void;
+}
+
+const DEFAULT_PAGE_SIZE = 1000;
+
+const PacketList = forwardRef<PacketListHandle, PacketListProps>(function PacketList(
+  { packets, onPacketSelect, selectedPacketId, onNextError, onPrevError, currentErrorIndex = 0 },
+  ref
+) {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 100 });
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { isMobile, isTablet } = useBreakpoint();
+  const { isMobile } = useBreakpoint();
   const ROW_HEIGHT = isMobile ? 120 : 40;
-  const OVERSCAN = 5; // Number of extra rows to render above/below visible area
+  const OVERSCAN = 5;
+
+  // Calculate error count
+  const errorCount = useMemo(() => {
+    return packets.filter(p => p.flags?.hasError || p.flags?.isRetransmission).length;
+  }, [packets]);
+
+  // Calculate current page based on scroll position
+  const currentPage = useMemo(() => {
+    return Math.floor(visibleRange.start / pageSize) + 1;
+  }, [visibleRange.start, pageSize]);
+
+  const totalPages = useMemo(() => {
+    return Math.ceil(packets.length / pageSize);
+  }, [packets.length, pageSize]);
+
+  // Scroll to specific packet number (1-indexed)
+  const scrollToPacket = useCallback((packetNumber: number) => {
+    const container = containerRef.current;
+    if (!container || packetNumber < 1 || packetNumber > packets.length) return;
+    
+    const packetIndex = packetNumber - 1;
+    const scrollPosition = packetIndex * ROW_HEIGHT;
+    container.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+  }, [packets.length, ROW_HEIGHT]);
+
+  // Scroll to top
+  const scrollToTop = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const maxScroll = packets.length * ROW_HEIGHT - container.clientHeight;
+    container.scrollTo({ top: maxScroll, behavior: 'smooth' });
+  }, [packets.length, ROW_HEIGHT]);
+
+  // Scroll to page
+  const scrollToPage = useCallback((page: number) => {
+    if (page < 1 || page > totalPages) return;
+    const packetIndex = (page - 1) * pageSize;
+    scrollToPacket(packetIndex + 1);
+  }, [totalPages, pageSize, scrollToPacket]);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    scrollToPacket,
+    scrollToTop,
+    scrollToBottom,
+  }), [scrollToPacket, scrollToTop, scrollToBottom]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -191,6 +260,24 @@ export default function PacketList({ packets, onPacketSelect, selectedPacketId }
         {visibleRange.start + 1}-{Math.min(visibleRange.end, packets.length)} of {packets.length}
         <span className="hidden sm:inline"> packets</span>
       </div>
+
+      {/* Navigation Toolbar */}
+      <PacketNavigationToolbar
+        totalPackets={packets.length}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        errorCount={errorCount}
+        currentErrorIndex={currentErrorIndex}
+        onPageChange={scrollToPage}
+        onPageSizeChange={setPageSize}
+        onJumpToPacket={scrollToPacket}
+        onJumpToTop={scrollToTop}
+        onJumpToBottom={scrollToBottom}
+        onNextError={onNextError ?? (() => {})}
+        onPrevError={onPrevError ?? (() => {})}
+      />
     </div>
   );
-}
+});
+
+export default PacketList;

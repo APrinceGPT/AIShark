@@ -7,14 +7,16 @@ import {
 import { SUMMARY_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import { getPacketSession } from '@/lib/packet-session';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 interface SummaryRequest {
-  packets: Packet[];
-  statistics: PacketStatistics | null;
-  analysis: AnalysisResult | null;
+  packets?: Packet[];
+  statistics?: PacketStatistics | null;
+  analysis?: AnalysisResult | null;
+  sessionId?: string;
 }
 
 /**
@@ -24,11 +26,29 @@ interface SummaryRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: SummaryRequest = await request.json();
-    const { packets, statistics, analysis } = body;
+    let { packets, statistics, analysis, sessionId } = body;
+
+    // If sessionId is provided, fetch data from Supabase
+    if (sessionId && (!packets || packets.length === 0)) {
+      const sessionResult = await getPacketSession(sessionId);
+      if (!sessionResult.success || !sessionResult.session) {
+        return NextResponse.json(
+          { error: sessionResult.error || 'Session not found' },
+          { status: 404 }
+        );
+      }
+      packets = sessionResult.session.packets;
+      if (!statistics && sessionResult.session.statistics) {
+        statistics = sessionResult.session.statistics;
+      }
+      if (!analysis && sessionResult.session.analysis) {
+        analysis = sessionResult.session.analysis;
+      }
+    }
 
     if (!packets || packets.length === 0) {
       return NextResponse.json(
-        { error: 'No packets provided' },
+        { error: 'No packets provided (provide packets array or sessionId)' },
         { status: 400 }
       );
     }
@@ -36,8 +56,8 @@ export async function POST(request: NextRequest) {
     // Prepare optimized context with token budget
     const { context: fullContext, metrics } = prepareOptimizedContext(
       packets, 
-      statistics, 
-      analysis,
+      statistics || null, 
+      analysis || null,
       4000 // Max tokens for summary
     );
     

@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Packet } from '@/types/packet';
 import { getCompletion } from '@/lib/ai/client';
+import { getPacketSession } from '@/lib/packet-session';
 
 export async function POST(request: NextRequest) {
   try {
-    const { query, packets } = await request.json();
+    const body = await request.json();
+    const { query, sessionId } = body;
+    let { packets } = body;
+
+    // If sessionId is provided, fetch packets from Supabase
+    if (sessionId && (!packets || packets.length === 0)) {
+      const sessionResult = await getPacketSession(sessionId);
+      if (!sessionResult.success || !sessionResult.session) {
+        return NextResponse.json(
+          { error: sessionResult.error || 'Session not found' },
+          { status: 404 }
+        );
+      }
+      packets = sessionResult.session.packets;
+    }
 
     if (!query || !packets || !Array.isArray(packets)) {
       return NextResponse.json(
-        { error: 'Query and packets array are required' },
+        { error: 'Query and packets array (or sessionId) are required' },
         { status: 400 }
       );
     }

@@ -6,15 +6,17 @@ import {
 import { TROUBLESHOOT_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import { getPacketSession } from '@/lib/packet-session';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 interface TroubleshootRequest {
   problem: string;
-  packets: Packet[];
-  statistics: PacketStatistics | null;
-  analysis: AnalysisResult | null;
+  packets?: Packet[];
+  statistics?: PacketStatistics | null;
+  analysis?: AnalysisResult | null;
+  sessionId?: string;
 }
 
 /**
@@ -24,7 +26,7 @@ interface TroubleshootRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: TroubleshootRequest = await request.json();
-    const { problem, packets, statistics, analysis } = body;
+    let { problem, packets, statistics, analysis, sessionId } = body;
 
     if (!problem || problem.trim().length === 0) {
       return NextResponse.json(
@@ -33,9 +35,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // If sessionId is provided, fetch data from Supabase
+    if (sessionId && (!packets || packets.length === 0)) {
+      const sessionResult = await getPacketSession(sessionId);
+      if (!sessionResult.success || !sessionResult.session) {
+        return NextResponse.json(
+          { error: sessionResult.error || 'Session not found' },
+          { status: 404 }
+        );
+      }
+      packets = sessionResult.session.packets;
+      if (!statistics && sessionResult.session.statistics) {
+        statistics = sessionResult.session.statistics;
+      }
+      if (!analysis && sessionResult.session.analysis) {
+        analysis = sessionResult.session.analysis;
+      }
+    }
+
     if (!packets || packets.length === 0) {
       return NextResponse.json(
-        { error: 'No packets provided' },
+        { error: 'No packets provided (provide packets array or sessionId)' },
         { status: 400 }
       );
     }
@@ -43,8 +63,8 @@ export async function POST(request: NextRequest) {
     // Prepare full context (troubleshooting needs more complete data)
     const { context: fullContext, metrics } = prepareOptimizedContext(
       packets, 
-      statistics, 
-      analysis,
+      statistics || null, 
+      analysis || null,
       5000 // Higher budget for troubleshooting
     );
     

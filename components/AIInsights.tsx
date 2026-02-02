@@ -11,9 +11,10 @@ interface AIInsightsProps {
   statistics: PacketStatistics | null;
   analysis: AnalysisResult | null;
   onPacketClick?: (packetId: number) => void;
+  sessionId?: string | null;
 }
 
-export default function AIInsights({ packets, statistics, analysis, onPacketClick }: AIInsightsProps) {
+export default function AIInsights({ packets, statistics, analysis, onPacketClick, sessionId }: AIInsightsProps) {
   const [summary, setSummary] = useState<string>('');
   const [anomalies, setAnomalies] = useState<string>('');
   const [troubleshootAnalysis, setTroubleshootAnalysis] = useState<string>('');
@@ -42,10 +43,15 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
         return;
       }
 
+      // Use sessionId if available (for large files), otherwise send packets directly
+      const requestBody = sessionId
+        ? { sessionId, statistics, analysis }
+        : { packets, statistics, analysis };
+
       const response = await fetch('/api/analyze/summary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics, analysis }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -88,10 +94,15 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
         return;
       }
 
+      // Use sessionId if available (for large files), otherwise send packets directly
+      const requestBody = sessionId
+        ? { sessionId, statistics, analysis }
+        : { packets, statistics, analysis };
+
       const response = await fetch('/api/analyze/anomaly', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics, analysis }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -139,15 +150,15 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
       const problem = anomalies || 
         'Analyze this network capture for potential issues, performance problems, or misconfigurations.';
 
+      // Use sessionId if available (for large files), otherwise send packets directly
+      const requestBody = sessionId
+        ? { sessionId, statistics, analysis, problem }
+        : { packets, statistics, analysis, problem };
+
       const response = await fetch('/api/analyze/troubleshoot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          packets, 
-          statistics, 
-          analysis,
-          problem 
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
