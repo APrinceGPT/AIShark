@@ -159,7 +159,7 @@ function parseContent(content: string, onPacketClick?: (packetId: number) => voi
               {currentSection}
             </span>
           </div>
-          <div className="px-3 py-2 bg-white dark:bg-gray-800/50">
+          <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800">
             {sectionContent}
           </div>
         </div>
@@ -172,13 +172,13 @@ function parseContent(content: string, onPacketClick?: (packetId: number) => voi
   const flushNumberedItem = (key: string) => {
     if (currentNumberedItem && numberedItemContent.length > 0) {
       elements.push(
-        <div key={key} className="my-4 border-l-4 border-purple-500 dark:border-purple-400 bg-gray-50 dark:bg-gray-800/50 rounded-r-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div key={key} className="my-4 border-l-4 border-purple-500 dark:border-purple-400 bg-gray-50 dark:bg-gray-800 rounded-r-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-750">
             <h4 className="text-base font-semibold text-gray-900 dark:text-white">
               {currentNumberedItem}
             </h4>
           </div>
-          <div className="px-4 py-3">
+          <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800">
             {numberedItemContent}
           </div>
         </div>
