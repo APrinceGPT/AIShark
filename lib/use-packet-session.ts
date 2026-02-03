@@ -26,13 +26,18 @@ export interface PacketSessionState {
 }
 
 interface UploadOptions {
-  chunkSize?: number;           // Packets per chunk (default: 2000)
+  chunkSize?: number;           // Packets per chunk (default: 3000)
   onProgress?: (progress: UploadProgress) => void;
   onComplete?: (sessionId: string) => void;
   onError?: (error: string) => void;
 }
 
-const DEFAULT_CHUNK_SIZE = 1000;
+// Increased from 1000 to 3000 - optimized packets average ~500-800 bytes each
+// 3000 packets * 800 bytes = ~2.4MB, well under 4.5MB limit
+const DEFAULT_CHUNK_SIZE = 3000;
+
+// Maximum payload size (4MB to leave headroom under 4.5MB limit)
+const MAX_CHUNK_BYTES = 4 * 1024 * 1024;
 
 /**
  * Sanitize string to remove invalid Unicode escape sequences
@@ -114,6 +119,22 @@ function optimizePacketForUpload(packet: Packet): Record<string, unknown> {
 }
 
 /**
+ * Estimate JSON payload size in bytes
+ */
+function estimatePayloadSize(packets: Record<string, unknown>[]): number {
+  // Quick estimation: JSON.stringify a sample and extrapolate
+  if (packets.length === 0) return 0;
+  
+  // Sample first 10 packets for average size estimation
+  const sampleSize = Math.min(10, packets.length);
+  const sample = packets.slice(0, sampleSize);
+  const sampleJson = JSON.stringify(sample);
+  const avgPacketSize = sampleJson.length / sampleSize;
+  
+  return Math.ceil(avgPacketSize * packets.length * 1.1); // 10% overhead for full JSON structure
+}
+
+/**
  * Hook for managing packet session uploads to Supabase
  */
 export function usePacketSession(options: UploadOptions = {}) {
@@ -147,6 +168,7 @@ export function usePacketSession(options: UploadOptions = {}) {
 
   /**
    * Upload packets to Supabase in chunks
+   * Uses dynamic chunk sizing to maximize throughput while staying under 4.5MB limit
    */
   const uploadPackets = useCallback(async (
     packets: Packet[],
@@ -162,7 +184,31 @@ export function usePacketSession(options: UploadOptions = {}) {
     }
     abortControllerRef.current = new AbortController();
 
-    const totalChunks = Math.ceil(packets.length / chunkSize);
+    // Pre-optimize all packets to calculate accurate chunk sizes
+    const optimizedPackets = packets.map(optimizePacketForUpload);
+    
+    // Calculate dynamic chunk boundaries based on payload size
+    const chunks: { start: number; end: number }[] = [];
+    let currentStart = 0;
+    
+    while (currentStart < optimizedPackets.length) {
+      // Start with the configured chunk size or remaining packets
+      let testEnd = Math.min(currentStart + chunkSize, optimizedPackets.length);
+      let testChunk = optimizedPackets.slice(currentStart, testEnd);
+      let estimatedSize = estimatePayloadSize(testChunk);
+      
+      // If chunk is too large, reduce size until it fits
+      while (estimatedSize > MAX_CHUNK_BYTES && testEnd > currentStart + 100) {
+        testEnd = Math.floor(currentStart + (testEnd - currentStart) * 0.75);
+        testChunk = optimizedPackets.slice(currentStart, testEnd);
+        estimatedSize = estimatePayloadSize(testChunk);
+      }
+      
+      chunks.push({ start: currentStart, end: testEnd });
+      currentStart = testEnd;
+    }
+
+    const totalChunks = chunks.length;
     let currentSessionId: string | null = null;
 
     // Initialize progress
@@ -188,10 +234,8 @@ export function usePacketSession(options: UploadOptions = {}) {
           throw new Error('Upload cancelled');
         }
 
-        const start = i * chunkSize;
-        const end = Math.min(start + chunkSize, packets.length);
-        // Optimize packets before upload to reduce payload size
-        const chunkPackets = packets.slice(start, end).map(optimizePacketForUpload);
+        const { start, end } = chunks[i];
+        const chunkPackets = optimizedPackets.slice(start, end);
         const isLastChunk = i === totalChunks - 1;
 
         const response: Response = await fetch('/api/packets/upload', {
