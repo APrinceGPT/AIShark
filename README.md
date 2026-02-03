@@ -13,23 +13,30 @@ A powerful, AI-enhanced PCAP/PCAPNG packet analyzer built with Next.js 16. Analy
 
 ## 🚀 What's New in Phase 6 (February 2026)
 
-### ☁️ Large File Support (Supabase Storage) ✨ NEW
+### 🤖 SharkAI Help Mode ✨ NEW
+- **Project Help** - Ask SharkAI about features, how to use the app, FAQ without loading a file
+- **Smart Detection** - Automatically detects help vs. packet analysis questions
+- **Quick Questions** - Shows help-related quick questions when no file is loaded
+- **Secure** - Help mode never reveals code-level details or secrets
+
+### ☁️ Large File Support (Supabase Storage)
 - **11,000+ Packet Files** - Full AI analysis for large captures (bypasses Vercel 4.5MB limit)
 - **Chunked Upload** - Automatic splitting into 2000-packet chunks
 - **Session-Based AI** - Packets stored temporarily in Supabase, queries use session ID
+- **Performance & Predict Support** - Large file analysis works for all AI features ✨ NEW
 - **Progress Indicator** - Inline banner shows upload progress for large files
 - **Auto-Cleanup** - Sessions deleted on tab close, manual clear, or 1-hour timeout
 - **Anonymous Support** - Works for both authenticated and anonymous users
 - **Cost Efficient** - Single AI call with full context vs. multiple chunked calls
 
-### 🦈 SharkAI Floating Assistant ✨ NEW
+### 🦈 SharkAI Floating Assistant
 - **Floating Chat Window** - Draggable AI assistant that stays visible while browsing packets
 - **Context-Aware** - Automatically includes selected packet context in questions
 - **Quick Actions** - "Ask about this packet" button for instant analysis
 - **Minimize/Maximize** - Collapse to icon or expand for full view
 - **Keyboard Shortcut** - Press `A` to toggle SharkAI visibility
 
-### 🧭 Enhanced Navigation Toolbar ✨ NEW
+### 🧭 Enhanced Navigation Toolbar
 - **Floating Navigation** - Fixed toolbar for large packet lists (bottom-right)
 - **Page Navigation** - Jump to Top, Bottom, Previous/Next page controls
 - **Configurable Page Size** - 100, 500, 1000 (default), or 10000 packets per page
@@ -42,6 +49,12 @@ A powerful, AI-enhanced PCAP/PCAPNG packet analyzer built with Next.js 16. Analy
 - **No Wireshark required** - Users can test AIShark without generating their own captures
 - **Protocol variety** - DNS, HTTP, and SMTP traffic samples included
 - **One-click download** - Simple download buttons with file descriptions and sizes
+- **Onboarding Integration** - Sample downloads step included in onboarding tour ✨ NEW
+
+### 🎨 UI/UX Improvements ✨ NEW
+- **Simplified Theme Toggle** - Direct light/dark toggle button (no dropdown)
+- **Enhanced Dark Mode** - Fixed background inconsistencies in AI response cards
+- **Custom Grays** - Added gray-750 and gray-850 for better dark mode contrast
 
 ### ⚡ Major Framework Upgrades
 - **Next.js 16.1** with Turbopack for faster builds
@@ -117,7 +130,8 @@ A powerful, AI-enhanced PCAP/PCAPNG packet analyzer built with Next.js 16. Analy
 - **Quick Start** - Download, upload, and analyze in seconds
 
 ### 🤖 AI-Powered Analysis (Phases 1 & 2 Complete)
-- **Large File Support** - AI analysis for 11,000+ packet captures via Supabase temporary storage ✨ NEW
+- **SharkAI Help Mode** - Ask about app features and usage without loading a file ✨ NEW
+- **Large File Support** - AI analysis for 11,000+ packet captures via Supabase temporary storage
 - **Intelligent Summaries** - Claude AI generates comprehensive capture analysis with optimized token usage
 - **Anomaly Detection** - Automatically identifies suspicious network patterns with adaptive sampling
 - **Natural Language Queries** - Ask questions in plain English about your captures
