@@ -34,7 +34,7 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
   const [troubleshootAnalysis, setTroubleshootAnalysis] = useState<string>('');
   const [loading, setLoading] = useState<'summary' | 'anomaly' | 'troubleshoot' | null>(null);
   const [error, setError] = useState<string>('');
-  const [showRemediationGuide, setShowRemediationGuide] = useState(false);
+  const [showTroubleshootingResults, setShowTroubleshootingResults] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Extract severity counts from AI responses
@@ -169,7 +169,7 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
       
       if (cached) {
         setTroubleshootAnalysis(cached.analysis);
-        setShowRemediationGuide(true);
+        setShowTroubleshootingResults(true);
         toast.success('Loaded from cache');
         setLoading(null);
         return;
@@ -192,7 +192,7 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
 
       if (data.success) {
         setTroubleshootAnalysis(data.analysis);
-        setShowRemediationGuide(true);
+        setShowTroubleshootingResults(true);
         aiCache.set('/api/analyze/troubleshoot', cacheKey, data);
         toast.success('Deep troubleshooting complete');
       } else {
@@ -325,10 +325,10 @@ export default function AIInsights({ packets, statistics, analysis, onPacketClic
       )}
 
       {/* Troubleshooting Results Modal */}
-      {showRemediationGuide && troubleshootAnalysis && (
+      {showTroubleshootingResults && troubleshootAnalysis && (
         <TroubleshootingResults
           analysis={troubleshootAnalysis}
-          onClose={() => setShowRemediationGuide(false)}
+          onClose={() => setShowTroubleshootingResults(false)}
         />
       )}
     </div>
