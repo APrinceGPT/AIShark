@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   prepareOptimizedContext, 
   validateContextSize,
-  optimizeContextForQuery 
+  optimizeContextForQuery,
+  prepareRAGContext,
+  shouldUseRAG
 } from '@/lib/ai/context-builder';
 import { QUERY_PROMPT, HELP_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
@@ -83,34 +85,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare optimized context
-    const { context: fullContext, metrics } = prepareOptimizedContext(
-      packets, 
-      statistics || null, 
-      analysis || null,
-      3500 // Lower for queries to leave room for question
-    );
+    // Determine whether to use RAG or traditional sampling
+    const useRAG = sessionId && shouldUseRAG(packets.length);
     
-    const optimizedContext = optimizeContextForQuery(fullContext, 'query');
-    
-    // Validate context size
-    const validation = validateContextSize(optimizedContext);
-    if (!validation.valid) {
-      console.warn('Context validation failed:', validation.warning);
-      return NextResponse.json(
-        { error: validation.warning },
-        { status: 400 }
-      );
-    }
+    let contextForAI: string;
+    let contextMethod: 'rag' | 'sampling' | 'hybrid' = 'sampling';
+    let estimatedTokens: number;
+    let ragMatchCount = 0;
 
-    console.log(`Query context: ${metrics.estimatedTokens} tokens for question: "${question}"`);
+    if (useRAG && sessionId) {
+      // Use RAG-enhanced context building
+      console.log(`Using RAG for session ${sessionId} (${packets.length} packets)`);
+      
+      const ragContext = await prepareRAGContext(
+        sessionId,
+        question,
+        packets,
+        statistics || null,
+        analysis || null,
+        4500 // Higher token budget for RAG
+      );
+      
+      contextForAI = ragContext.context;
+      contextMethod = ragContext.metrics.method;
+      estimatedTokens = ragContext.metrics.estimatedTokens;
+      ragMatchCount = ragContext.metrics.matchCount;
+      
+      console.log(`RAG context: ${estimatedTokens} tokens, ${ragMatchCount} matches, method: ${contextMethod}`);
+    } else {
+      // Use traditional sampling
+      const { context: fullContext, metrics } = prepareOptimizedContext(
+        packets, 
+        statistics || null, 
+        analysis || null,
+        3500 // Lower for queries to leave room for question
+      );
+      
+      const optimizedContext = optimizeContextForQuery(fullContext, 'query');
+      
+      // Validate context size
+      const validation = validateContextSize(optimizedContext);
+      if (!validation.valid) {
+        console.warn('Context validation failed:', validation.warning);
+        return NextResponse.json(
+          { error: validation.warning },
+          { status: 400 }
+        );
+      }
+      
+      contextForAI = JSON.stringify(optimizedContext, null, 2);
+      estimatedTokens = metrics.estimatedTokens;
+      
+      console.log(`Sampling context: ${estimatedTokens} tokens for question: "${question}"`);
+    }
 
     // Generate answer
     const answer = await getCompletion(
       QUERY_PROMPT.system,
       QUERY_PROMPT.user({
         question,
-        captureContext: optimizedContext,
+        captureContext: contextForAI,
       })
     );
 
@@ -120,7 +154,9 @@ export async function POST(request: NextRequest) {
       answer,
       timestamp: Date.now(),
       metrics: {
-        tokens: metrics.estimatedTokens,
+        tokens: estimatedTokens,
+        method: contextMethod,
+        ragMatches: ragMatchCount,
       },
     });
 

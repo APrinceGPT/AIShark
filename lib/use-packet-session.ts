@@ -426,6 +426,83 @@ export function usePacketSession(options: UploadOptions = {}) {
     });
   }, []);
 
+  /**
+   * Trigger RAG indexing for semantic search
+   * Called after upload completes for enhanced AI responses
+   */
+  const triggerRAGIndexing = useCallback(async (sessionId?: string): Promise<{
+    success: boolean;
+    status: string;
+    error?: string;
+  }> => {
+    const targetSessionId = sessionId || sessionIdRef.current;
+    if (!targetSessionId) {
+      return { success: false, status: 'no_session', error: 'No session ID' };
+    }
+
+    try {
+      console.log(`[RAG] Starting indexing for session ${targetSessionId}`);
+      
+      const response = await fetch('/api/analyze/index', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: targetSessionId }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log(`[RAG] Indexing complete: ${result.embeddingsCreated || 0} embeddings created`);
+        return { 
+          success: true, 
+          status: result.status,
+        };
+      } else {
+        console.warn(`[RAG] Indexing failed:`, result.error);
+        return { 
+          success: false, 
+          status: result.status || 'failed',
+          error: result.error,
+        };
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`[RAG] Indexing error:`, error);
+      return { 
+        success: false, 
+        status: 'error',
+        error: errorMessage,
+      };
+    }
+  }, []);
+
+  /**
+   * Check RAG indexing status
+   */
+  const checkRAGStatus = useCallback(async (sessionId?: string): Promise<{
+    indexed: boolean;
+    status: string;
+    coverage?: number;
+  }> => {
+    const targetSessionId = sessionId || sessionIdRef.current;
+    if (!targetSessionId) {
+      return { indexed: false, status: 'no_session' };
+    }
+
+    try {
+      const response = await fetch(`/api/analyze/index?sessionId=${targetSessionId}`);
+      const result = await response.json();
+
+      return {
+        indexed: result.indexed || false,
+        status: result.status || 'unknown',
+        coverage: result.progress?.percentage,
+      };
+    } catch {
+      return { indexed: false, status: 'error' };
+    }
+  }, []);
+
   // Cleanup on page unload using sendBeacon
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -453,6 +530,8 @@ export function usePacketSession(options: UploadOptions = {}) {
     cleanupSession,
     cancelUpload,
     resetState,
+    triggerRAGIndexing,
+    checkRAGStatus,
   };
 }
 

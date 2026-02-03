@@ -1,9 +1,17 @@
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
+import { 
+  retrieveRelevantPackets, 
+  buildRAGContext, 
+  isRAGAvailable,
+  extractProtocolFromQuery,
+  enhanceQueryForEmbedding,
+  type RAGResult 
+} from './rag-retriever';
 
 /**
  * Context Builder for AI Analysis
  * Prepares structured data from packets for AI consumption
- * Limits data size to optimize API costs
+ * Supports both traditional sampling and RAG-enhanced retrieval
  */
 
 export interface AIContext {
@@ -337,3 +345,197 @@ export function validateContextSize(context: Partial<AIContext>): {
   
   return { valid: true, tokens };
 }
+
+// ============================================================
+// RAG-ENHANCED CONTEXT BUILDING
+// ============================================================
+
+export interface RAGContextResult {
+  context: string;
+  isRAGEnabled: boolean;
+  ragResult?: RAGResult;
+  fallbackContext?: AIContext;
+  metrics: {
+    estimatedTokens: number;
+    relevantPacketCount: number;
+    matchCount: number;
+    method: 'rag' | 'sampling' | 'hybrid';
+  };
+}
+
+/**
+ * Prepare context using RAG (Retrieval-Augmented Generation)
+ * Falls back to sampling if RAG is not available
+ */
+export async function prepareRAGContext(
+  sessionId: string,
+  query: string,
+  packets: Packet[],
+  statistics: PacketStatistics | null,
+  analysis: AnalysisResult | null,
+  maxTokens: number = 5000
+): Promise<RAGContextResult> {
+  // Check if RAG is available for this session
+  const ragStatus = await isRAGAvailable(sessionId);
+  
+  if (!ragStatus.available) {
+    // Fall back to traditional sampling
+    console.log(`RAG not available for session ${sessionId} (status: ${ragStatus.status}). Using sampling.`);
+    
+    const { context, metrics } = prepareOptimizedContext(packets, statistics, analysis, maxTokens);
+    const optimizedContext = optimizeContextForQuery(context, 'query');
+    
+    return {
+      context: JSON.stringify(optimizedContext, null, 2),
+      isRAGEnabled: false,
+      fallbackContext: context,
+      metrics: {
+        estimatedTokens: metrics.estimatedTokens,
+        relevantPacketCount: metrics.packetCount,
+        matchCount: 0,
+        method: 'sampling',
+      },
+    };
+  }
+
+  try {
+    // Enhance query for better embedding matching
+    const enhancedQuery = enhanceQueryForEmbedding(query);
+    
+    // Extract protocol filter if query mentions specific protocol
+    const protocolFilter = extractProtocolFromQuery(query);
+    
+    // Retrieve relevant packets using semantic search
+    const ragResult = await retrieveRelevantPackets(
+      sessionId,
+      enhancedQuery,
+      packets,
+      {
+        matchCount: 25,
+        threshold: 0.6,
+        protocolFilter: protocolFilter || undefined,
+      }
+    );
+
+    if (!ragResult.success || ragResult.relevantPackets.length === 0) {
+      // RAG failed or found nothing, fall back to sampling
+      console.log(`RAG search returned no results. Falling back to sampling.`);
+      
+      const { context, metrics } = prepareOptimizedContext(packets, statistics, analysis, maxTokens);
+      const optimizedContext = optimizeContextForQuery(context, 'query');
+      
+      return {
+        context: JSON.stringify(optimizedContext, null, 2),
+        isRAGEnabled: false,
+        ragResult,
+        fallbackContext: context,
+        metrics: {
+          estimatedTokens: metrics.estimatedTokens,
+          relevantPacketCount: metrics.packetCount,
+          matchCount: 0,
+          method: 'sampling',
+        },
+      };
+    }
+
+    // Build RAG context
+    const ragContext = buildRAGContext(ragResult);
+    
+    // Also include summary statistics for full picture
+    const summaryContext = buildSummaryContext(packets, statistics, analysis);
+    
+    const fullContext = `${summaryContext}\n\n${ragContext}`;
+    const estimatedTokens = Math.ceil(fullContext.length / 4);
+
+    return {
+      context: fullContext,
+      isRAGEnabled: true,
+      ragResult,
+      metrics: {
+        estimatedTokens,
+        relevantPacketCount: ragResult.relevantPackets.length,
+        matchCount: ragResult.matchCount,
+        method: 'rag',
+      },
+    };
+
+  } catch (error) {
+    console.error('RAG context preparation failed:', error);
+    
+    // Fall back to sampling on error
+    const { context, metrics } = prepareOptimizedContext(packets, statistics, analysis, maxTokens);
+    const optimizedContext = optimizeContextForQuery(context, 'query');
+    
+    return {
+      context: JSON.stringify(optimizedContext, null, 2),
+      isRAGEnabled: false,
+      fallbackContext: context,
+      metrics: {
+        estimatedTokens: metrics.estimatedTokens,
+        relevantPacketCount: metrics.packetCount,
+        matchCount: 0,
+        method: 'sampling',
+      },
+    };
+  }
+}
+
+/**
+ * Build a summary context string for RAG-enhanced queries
+ */
+function buildSummaryContext(
+  packets: Packet[],
+  statistics: PacketStatistics | null,
+  analysis: AnalysisResult | null
+): string {
+  const parts: string[] = [];
+  
+  parts.push('=== CAPTURE OVERVIEW ===');
+  parts.push(`Total Packets: ${packets.length}`);
+  
+  if (packets.length > 0) {
+    const duration = (packets[packets.length - 1].timestamp - packets[0].timestamp) / 1000;
+    parts.push(`Duration: ${duration.toFixed(2)} seconds`);
+  }
+  
+  if (statistics) {
+    parts.push(`Bandwidth: ${(statistics.bandwidth.total / 1024).toFixed(2)} KB total`);
+    
+    // Protocol distribution
+    const protocols = Object.entries(statistics.protocolDistribution)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([proto, count]) => `${proto}: ${count}`)
+      .join(', ');
+    parts.push(`Top Protocols: ${protocols}`);
+    
+    // Errors
+    const totalErrors = (statistics.errors.retransmissions || 0) + 
+                       (statistics.errors.duplicateAcks || 0) + 
+                       (statistics.errors.resets || 0);
+    if (totalErrors > 0) {
+      parts.push(`Errors: ${totalErrors} (${statistics.errors.retransmissions || 0} retrans, ${statistics.errors.resets || 0} resets)`);
+    }
+  }
+  
+  if (analysis) {
+    if (analysis.insights.length > 0) {
+      parts.push(`Key Insights: ${analysis.insights.slice(0, 3).join('; ')}`);
+    }
+    if (analysis.latencyIssues.length > 0) {
+      parts.push(`Latency Issues: ${analysis.latencyIssues.length} detected`);
+    }
+  }
+  
+  return parts.join('\n');
+}
+
+/**
+ * Check if a session should use RAG
+ * Based on packet count threshold
+ */
+export function shouldUseRAG(packetCount: number): boolean {
+  // Use RAG for larger captures where sampling loses too much context
+  return packetCount > 500;
+}
+

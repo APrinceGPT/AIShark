@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
-import { X, Minus, Maximize2, Minimize2, Send, Trash2, GripHorizontal, Sparkles } from 'lucide-react';
+import { X, Minus, Maximize2, Minimize2, Send, Trash2, GripHorizontal, Sparkles, AlertTriangle } from 'lucide-react';
 import { aiCache } from '@/lib/ai-cache';
 import { toast } from './ToastContainer';
 import FormattedAIResponse from './FormattedAIResponse';
@@ -22,6 +22,10 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  metadata?: {
+    contextMethod?: 'rag' | 'sampling' | 'hybrid';
+    ragMatches?: number;
+  };
 }
 
 interface Position {
@@ -165,6 +169,10 @@ export default function SharkAIAssistant({
           role: 'assistant',
           content: data.answer,
           timestamp: Date.now(),
+          metadata: data.metrics ? {
+            contextMethod: data.metrics.method,
+            ragMatches: data.metrics.ragMatches,
+          } : undefined,
         };
         setMessages(prev => [...prev, assistantMessage]);
         aiCache.set('/api/analyze/query', cacheKey, data);
@@ -384,6 +392,14 @@ export default function SharkAIAssistant({
                 {msg.role === 'assistant' ? (
                   <div className="text-sm">
                     <FormattedAIResponse content={msg.content} onPacketClick={onPacketClick} />
+                    {msg.metadata?.contextMethod === 'sampling' && (
+                      <div className="mt-3 flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-2.5 py-2">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Limited context:</strong> Random sampling used. Results may be incomplete.
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
