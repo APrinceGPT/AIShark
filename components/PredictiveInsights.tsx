@@ -34,6 +34,7 @@ interface PredictiveInsightsProps {
   statistics: PacketStatistics | null;
   onClose: () => void;
   onPacketClick?: (packetId: number) => void;
+  sessionId?: string | null;
 }
 
 /**
@@ -44,7 +45,8 @@ export default function PredictiveInsights({
   packets, 
   statistics, 
   onClose,
-  onPacketClick 
+  onPacketClick,
+  sessionId
 }: PredictiveInsightsProps) {
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [aiInsights, setAiInsights] = useState<string>('');
@@ -60,10 +62,14 @@ export default function PredictiveInsights({
     setLoading(true);
 
     try {
+      const requestBody = sessionId
+        ? { sessionId, statistics }
+        : { packets, statistics };
+
       const response = await fetch('/api/analyze/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();

@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics } from '@/types/packet';
 import { analyzePerformance, PerformanceReport } from '@/lib/performance-analyzer';
+import { getPacketSession } from '@/lib/packet-session';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 interface PerformanceRequest {
-  packets: Packet[];
-  statistics: PacketStatistics;
+  packets?: Packet[];
+  statistics?: PacketStatistics;
+  sessionId?: string;
 }
 
 /**
@@ -17,11 +19,33 @@ interface PerformanceRequest {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { packets, statistics }: PerformanceRequest = await request.json();
+    let { packets, statistics, sessionId }: PerformanceRequest = await request.json();
+
+    // If sessionId is provided, fetch data from Supabase
+    if (sessionId && (!packets || packets.length === 0)) {
+      const sessionResult = await getPacketSession(sessionId);
+      if (!sessionResult.success || !sessionResult.session) {
+        return NextResponse.json(
+          { error: sessionResult.error || 'Session not found' },
+          { status: 404 }
+        );
+      }
+      packets = sessionResult.session.packets;
+      if (!statistics && sessionResult.session.statistics) {
+        statistics = sessionResult.session.statistics;
+      }
+    }
 
     if (!packets || packets.length === 0) {
       return NextResponse.json(
-        { error: 'No packets provided' },
+        { error: 'No packets provided (provide packets array or sessionId)' },
+        { status: 400 }
+      );
+    }
+
+    if (!statistics) {
+      return NextResponse.json(
+        { error: 'Statistics required for performance analysis' },
         { status: 400 }
       );
     }

@@ -5,6 +5,24 @@ import { aiCache } from '@/lib/ai-cache';
 import { toast } from './ToastContainer';
 import FormattedAIResponse from './FormattedAIResponse';
 
+// Help question detection (matches server-side logic)
+const HELP_KEYWORDS = [
+  'how to use', 'how do i use', 'how does this work', 'how does aishark work',
+  'help', 'guide', 'tutorial', 'getting started', 'what can you do',
+  'what features', 'what is aishark', 'what is this', 'explain the app',
+  'how to upload', 'how to filter', 'how to export', 'how to save',
+  'what formats', 'supported formats', 'file types', 'keyboard shortcuts',
+  'dark mode', 'light mode', 'theme', 'sign in', 'login', 'account',
+  'your capabilities', 'what can i ask', 'what questions',
+  'project', 'about this app', 'about aishark', 'documentation',
+  'faq', 'frequently asked', 'tips', 'best practices'
+];
+
+function isHelpQuestion(question: string): boolean {
+  const lowerQuestion = question.toLowerCase();
+  return HELP_KEYWORDS.some(keyword => lowerQuestion.includes(keyword));
+}
+
 interface ChatInterfaceProps {
   packets: Packet[];
   statistics: PacketStatistics | null;
@@ -34,7 +52,16 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim() || loading || packets.length === 0) return;
+    if (!input.trim() || loading) return;
+    
+    const question = input.trim();
+    const isHelp = isHelpQuestion(question);
+    
+    // Require packets for non-help questions
+    if (!isHelp && packets.length === 0) {
+      toast.error('Upload a packet capture first to ask analysis questions');
+      return;
+    }
 
     const userMessage: Message = {
       role: 'user',
@@ -43,31 +70,35 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const question = input;
     setInput('');
     setLoading(true);
 
     try {
-      // Check cache first
+      // Check cache first (only for packet analysis, not help)
       const cacheKey = { question, packets: packets.length, statistics, analysis };
-      const cached = aiCache.get('/api/analyze/query', cacheKey);
-      
-      if (cached) {
-        const assistantMessage: Message = {
-          role: 'assistant',
-          content: cached.answer,
-          timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-        toast.info('Loaded from cache');
-        setLoading(false);
-        return;
+      if (!isHelp) {
+        const cached = aiCache.get('/api/analyze/query', cacheKey);
+        
+        if (cached) {
+          const assistantMessage: Message = {
+            role: 'assistant',
+            content: cached.answer,
+            timestamp: Date.now(),
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          toast.info('Loaded from cache');
+          setLoading(false);
+          return;
+        }
       }
 
-      // Use sessionId if available (for large files), otherwise send packets directly
-      const requestBody = sessionId
-        ? { question, sessionId, statistics, analysis }
-        : { question, packets, statistics, analysis };
+      // For help questions, only send the question
+      // For packet analysis, use sessionId if available (for large files), otherwise send packets
+      const requestBody = isHelp
+        ? { question }
+        : sessionId
+          ? { question, sessionId, statistics, analysis }
+          : { question, packets, statistics, analysis };
 
       const response = await fetch('/api/analyze/query', {
         method: 'POST',
@@ -118,12 +149,25 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
     setMessages([]);
   };
 
-  const quickQuestions = [
+  // Quick questions for packet analysis
+  const packetQuestions = [
     'Why is this connection slow?',
     'Are there any security concerns?',
     'What\'s causing the packet loss?',
     'Explain the TLS handshake errors',
   ];
+
+  // Quick questions for help/guidance
+  const helpQuestions = [
+    'How do I use AIShark?',
+    'What features are available?',
+    'How do I filter packets?',
+  ];
+
+  // Combine both - show help questions when no packets loaded
+  const quickQuestions = packets.length === 0 
+    ? helpQuestions 
+    : [...packetQuestions.slice(0, 3), helpQuestions[0]];
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col h-150">

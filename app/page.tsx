@@ -1077,6 +1077,7 @@ export default function Home() {
             setShowPerformanceReport(false);
             setCurrentView('packets');
           }}
+          sessionId={packetSessionId}
         />
       )}
 
@@ -1094,6 +1095,7 @@ export default function Home() {
               setCurrentView('packets');
             }
           }}
+          sessionId={packetSessionId}
         />
       )}
 

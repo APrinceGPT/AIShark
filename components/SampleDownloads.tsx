@@ -47,7 +47,7 @@ export default function SampleDownloads() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto" data-tour="sample-downloads">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
         <div className="flex items-center gap-2 mb-2">
           <FileArchive className="h-5 w-5 text-blue-600 dark:text-blue-400" />

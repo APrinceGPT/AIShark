@@ -4,10 +4,11 @@ import {
   validateContextSize,
   optimizeContextForQuery 
 } from '@/lib/ai/context-builder';
-import { QUERY_PROMPT } from '@/lib/ai/prompts';
+import { QUERY_PROMPT, HELP_PROMPT } from '@/lib/ai/prompts';
 import { getCompletion } from '@/lib/ai/client';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
 import { getPacketSession } from '@/lib/packet-session';
+import { isHelpQuestion, buildHelpContext } from '@/lib/ai/project-knowledge';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -22,7 +23,7 @@ interface QueryRequest {
 
 /**
  * POST /api/analyze/query
- * Answer natural language questions about packet capture
+ * Answer natural language questions about packet capture OR about AIShark usage
  */
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +37,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if this is a help question about the project
+    if (isHelpQuestion(question)) {
+      console.log(`Help question detected: "${question}"`);
+      
+      const helpContext = buildHelpContext();
+      const answer = await getCompletion(
+        HELP_PROMPT.system,
+        HELP_PROMPT.user({ question, helpContext })
+      );
+
+      return NextResponse.json({
+        success: true,
+        question,
+        answer,
+        timestamp: Date.now(),
+        isHelpResponse: true,
+      });
+    }
+
+    // Regular packet analysis question - need packets
     // If sessionId is provided, fetch data from Supabase
     if (sessionId && (!packets || packets.length === 0)) {
       const sessionResult = await getPacketSession(sessionId);

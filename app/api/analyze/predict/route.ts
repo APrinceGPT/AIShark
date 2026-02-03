@@ -4,8 +4,15 @@ import { extractPatternSignature, predictIssues } from '@/lib/predictive-analyze
 import { supabase } from '@/lib/supabase-client';
 import { LearnedPattern } from '@/types/database';
 import { getCompletion, ChatMessage } from '@/lib/ai/client';
+import { getPacketSession } from '@/lib/packet-session';
 
 export const maxDuration = 60;
+
+interface PredictRequest {
+  packets?: Packet[];
+  statistics?: PacketStatistics;
+  sessionId?: string;
+}
 
 /**
  * POST /api/analyze/predict
@@ -13,11 +20,26 @@ export const maxDuration = 60;
  */
 export async function POST(request: NextRequest) {
   try {
-    const { packets, statistics } = await request.json();
+    let { packets, statistics, sessionId }: PredictRequest = await request.json();
+
+    // If sessionId is provided, fetch data from Supabase
+    if (sessionId && (!packets || packets.length === 0)) {
+      const sessionResult = await getPacketSession(sessionId);
+      if (!sessionResult.success || !sessionResult.session) {
+        return NextResponse.json(
+          { success: false, error: sessionResult.error || 'Session not found' },
+          { status: 404 }
+        );
+      }
+      packets = sessionResult.session.packets;
+      if (!statistics && sessionResult.session.statistics) {
+        statistics = sessionResult.session.statistics;
+      }
+    }
 
     if (!packets || !Array.isArray(packets) || packets.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Invalid or empty packet data' },
+        { success: false, error: 'Invalid or empty packet data (provide packets array or sessionId)' },
         { status: 400 }
       );
     }

@@ -17,9 +17,10 @@ interface PerformanceReportProps {
   statistics: PacketStatistics;
   onClose: () => void;
   onPacketClick?: (packet: Packet) => void;
+  sessionId?: string | null;
 }
 
-export default function PerformanceReport({ packets, statistics, onClose, onPacketClick }: PerformanceReportProps) {
+export default function PerformanceReport({ packets, statistics, onClose, onPacketClick, sessionId }: PerformanceReportProps) {
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<PerfReport | null>(null);
   const [aiInsights, setAiInsights] = useState<string>('');
@@ -33,10 +34,14 @@ export default function PerformanceReport({ packets, statistics, onClose, onPack
     setLoading(true);
 
     try {
+      const requestBody = sessionId
+        ? { sessionId, statistics }
+        : { packets, statistics };
+
       const response = await fetch('/api/analyze/performance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ packets, statistics }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();

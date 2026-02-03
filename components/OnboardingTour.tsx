@@ -44,6 +44,19 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
       disableBeacon: true,
     },
     {
+      target: '[data-tour="sample-downloads"]',
+      content: (
+        <div>
+          <h3 className="text-lg font-bold mb-2">Sample PCAP Files 📁</h3>
+          <p className="text-gray-600 dark:text-gray-300">
+            Don't have a capture file? Download one of our sample PCAP files to test AIShark's analysis capabilities right away!
+          </p>
+        </div>
+      ),
+      placement: 'top',
+      disableBeacon: true,
+    },
+    {
       target: '[data-tour="ai-features"]',
       content: (
         <div>
@@ -73,9 +86,9 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
       target: '[data-tour="theme-toggle"]',
       content: (
         <div>
-          <h3 className="text-lg font-bold mb-2">Dark Mode</h3>
+          <h3 className="text-lg font-bold mb-2">Light / Dark Mode 🌓</h3>
           <p className="text-gray-600 dark:text-gray-300">
-            Toggle between light and dark themes, or use system preference for automatic switching.
+            Click this button to instantly switch between light and dark themes based on your preference.
           </p>
         </div>
       ),
