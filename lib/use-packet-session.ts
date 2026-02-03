@@ -191,6 +191,8 @@ export function usePacketSession(options: UploadOptions = {}) {
     const chunks: { start: number; end: number }[] = [];
     let currentStart = 0;
     
+    console.log(`[PacketSession] Starting upload: ${packets.length} packets, target chunk size: ${chunkSize}`);
+    
     while (currentStart < optimizedPackets.length) {
       // Start with the configured chunk size or remaining packets
       let testEnd = Math.min(currentStart + chunkSize, optimizedPackets.length);
@@ -205,10 +207,12 @@ export function usePacketSession(options: UploadOptions = {}) {
       }
       
       chunks.push({ start: currentStart, end: testEnd });
+      console.log(`[PacketSession] Chunk ${chunks.length}: packets ${currentStart}-${testEnd} (${testEnd - currentStart} packets, ~${Math.round(estimatedSize / 1024)}KB)`);
       currentStart = testEnd;
     }
 
     const totalChunks = chunks.length;
+    console.log(`[PacketSession] Total chunks: ${totalChunks}, packets per chunk: ~${Math.round(packets.length / totalChunks)}`);
     let currentSessionId: string | null = null;
 
     // Initialize progress
