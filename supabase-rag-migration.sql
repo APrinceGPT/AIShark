@@ -224,7 +224,9 @@ CREATE POLICY "System can manage embedding status"
 -- ================================================================
 
 -- View for session embedding statistics
-CREATE OR REPLACE VIEW session_embedding_stats AS
+-- Using SECURITY INVOKER to enforce RLS of the querying user
+CREATE OR REPLACE VIEW session_embedding_stats 
+WITH (security_invoker = true) AS
 SELECT 
   es.session_id,
   es.status,

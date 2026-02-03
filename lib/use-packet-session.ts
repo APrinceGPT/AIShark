@@ -326,6 +326,26 @@ export function usePacketSession(options: UploadOptions = {}) {
       onProgress?.(completeProgress);
       onComplete?.(currentSessionId!);
 
+      // Auto-trigger RAG indexing for larger captures (>500 packets)
+      // This runs in background and doesn't block the upload completion
+      if (packets.length > 500 && currentSessionId) {
+        console.log(`[RAG] Auto-triggering indexing for ${packets.length} packets`);
+        // Fire and forget - indexing happens in background
+        fetch('/api/analyze/index', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: currentSessionId }),
+        }).then(res => res.json()).then(result => {
+          if (result.success) {
+            console.log(`[RAG] Background indexing started: ${result.status}`);
+          } else {
+            console.warn(`[RAG] Background indexing failed:`, result.error);
+          }
+        }).catch(err => {
+          console.warn(`[RAG] Background indexing error:`, err);
+        });
+      }
+
       return currentSessionId;
 
     } catch (error) {
