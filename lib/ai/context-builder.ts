@@ -354,18 +354,72 @@ export interface RAGContextResult {
   context: string;
   isRAGEnabled: boolean;
   ragResult?: RAGResult;
-  fallbackContext?: AIContext;
   metrics: {
     estimatedTokens: number;
     relevantPacketCount: number;
     matchCount: number;
-    method: 'rag' | 'sampling' | 'hybrid';
+    method: 'rag';  // Only RAG method - no sampling
+  };
+}
+
+export interface RAGNotReadyError {
+  type: 'rag_not_ready';
+  status: string;
+  coverage: number;
+  message: string;
+}
+
+/**
+ * Check if RAG is ready for queries
+ * Returns status info for UI display
+ */
+export async function checkRAGReadiness(sessionId: string): Promise<{
+  ready: boolean;
+  status: string;
+  coverage: number;
+  message: string;
+}> {
+  const ragStatus = await isRAGAvailable(sessionId);
+  
+  if (ragStatus.available) {
+    return {
+      ready: true,
+      status: 'complete',
+      coverage: ragStatus.coverage,
+      message: 'RAG indexing complete. SharkAI is ready.',
+    };
+  }
+  
+  // Determine appropriate message based on status
+  let message: string;
+  switch (ragStatus.status) {
+    case 'indexing':
+      message = `RAG indexing in progress (${ragStatus.coverage}% complete)...`;
+      break;
+    case 'pending':
+      message = 'RAG indexing queued. Please wait...';
+      break;
+    case 'failed':
+      message = 'RAG indexing failed. Please re-upload the capture.';
+      break;
+    case 'not_indexed':
+      message = 'Waiting for RAG indexing to start...';
+      break;
+    default:
+      message = `RAG status: ${ragStatus.status}`;
+  }
+  
+  return {
+    ready: false,
+    status: ragStatus.status,
+    coverage: ragStatus.coverage,
+    message,
   };
 }
 
 /**
  * Prepare context using RAG (Retrieval-Augmented Generation)
- * Throws error if RAG fails instead of silently falling back to sampling
+ * NO SAMPLING FALLBACK - throws error if RAG not available
  */
 export async function prepareRAGContext(
   sessionId: string,
@@ -381,134 +435,82 @@ export async function prepareRAGContext(
   console.log(`[RAG] Status for session ${sessionId}:`, ragStatus);
   
   if (!ragStatus.available) {
-    // Log the actual reason RAG is unavailable
-    console.warn(`[RAG] Not available for session ${sessionId}. Status: ${ragStatus.status}, Coverage: ${ragStatus.coverage}%`);
-    
-    // Return sampling but with clear indication WHY
-    const { context, metrics } = prepareOptimizedContext(packets, statistics, analysis, maxTokens);
-    const optimizedContext = optimizeContextForQuery(context, 'query');
-    
-    return {
-      context: JSON.stringify(optimizedContext, null, 2),
-      isRAGEnabled: false,
-      fallbackContext: context,
-      metrics: {
-        estimatedTokens: metrics.estimatedTokens,
-        relevantPacketCount: metrics.packetCount,
-        matchCount: 0,
-        method: 'sampling',
-      },
+    // THROW ERROR - NO FALLBACK TO SAMPLING
+    const error: RAGNotReadyError = {
+      type: 'rag_not_ready',
+      status: ragStatus.status,
+      coverage: ragStatus.coverage,
+      message: `RAG indexing not complete. Status: ${ragStatus.status}, Coverage: ${ragStatus.coverage}%`,
     };
+    console.error(`[RAG] Not ready:`, error);
+    throw error;
   }
 
-  try {
-    // Enhance query for better embedding matching
-    const enhancedQuery = enhanceQueryForEmbedding(query);
-    console.log(`[RAG] Enhanced query: "${enhancedQuery.substring(0, 100)}..."`);
-    
-    // Extract protocol filter if query mentions specific protocol
-    const protocolFilter = extractProtocolFromQuery(query);
-    if (protocolFilter) {
-      console.log(`[RAG] Protocol filter detected: ${protocolFilter}`);
+  // Enhance query for better embedding matching
+  const enhancedQuery = enhanceQueryForEmbedding(query);
+  console.log(`[RAG] Enhanced query: "${enhancedQuery.substring(0, 100)}..."`);
+  
+  // Extract protocol filter if query mentions specific protocol
+  const protocolFilter = extractProtocolFromQuery(query);
+  if (protocolFilter) {
+    console.log(`[RAG] Protocol filter detected: ${protocolFilter}`);
+  }
+  
+  // Retrieve relevant packets using semantic search
+  const ragResult = await retrieveRelevantPackets(
+    sessionId,
+    enhancedQuery,
+    packets,
+    {
+      matchCount: 30,
+      threshold: 0.4,  // Lower threshold for more results
+      protocolFilter: protocolFilter || undefined,
     }
-    
-    // Retrieve relevant packets using semantic search
-    const ragResult = await retrieveRelevantPackets(
-      sessionId,
-      enhancedQuery,
-      packets,
-      {
-        matchCount: 30,      // Increased from 25
-        threshold: 0.5,      // Lowered from 0.6 for more matches
-        protocolFilter: protocolFilter || undefined,
-      }
-    );
-    
-    console.log(`[RAG] Retrieval result: success=${ragResult.success}, matches=${ragResult.matchCount}, packets=${ragResult.relevantPackets.length}`);
+  );
+  
+  console.log(`[RAG] Retrieval result: success=${ragResult.success}, matches=${ragResult.matchCount}, packets=${ragResult.relevantPackets.length}`);
 
-    if (!ragResult.success) {
-      console.error(`[RAG] Retrieval failed:`, ragResult.error);
-      // Still fall back to sampling but log why
-      const { context, metrics } = prepareOptimizedContext(packets, statistics, analysis, maxTokens);
-      const optimizedContext = optimizeContextForQuery(context, 'query');
-      
-      return {
-        context: JSON.stringify(optimizedContext, null, 2),
-        isRAGEnabled: false,
-        ragResult,
-        fallbackContext: context,
-        metrics: {
-          estimatedTokens: metrics.estimatedTokens,
-          relevantPacketCount: metrics.packetCount,
-          matchCount: 0,
-          method: 'sampling',
-        },
-      };
-    }
-    
-    if (ragResult.relevantPackets.length === 0) {
-      console.warn(`[RAG] No relevant packets found for query. Using hybrid approach.`);
-      
-      // Use sampling but mark as hybrid since RAG was available but found nothing
-      const { context, metrics } = prepareOptimizedContext(packets, statistics, analysis, maxTokens);
-      const optimizedContext = optimizeContextForQuery(context, 'query');
-      
-      return {
-        context: JSON.stringify(optimizedContext, null, 2),
-        isRAGEnabled: true,  // RAG was available
-        ragResult,
-        fallbackContext: context,
-        metrics: {
-          estimatedTokens: metrics.estimatedTokens,
-          relevantPacketCount: metrics.packetCount,
-          matchCount: 0,
-          method: 'hybrid',  // Hybrid because RAG is available but found nothing
-        },
-      };
-    }
-
-    // Build RAG context
+  if (!ragResult.success) {
+    console.error(`[RAG] Retrieval failed:`, ragResult.error);
+    throw new Error(`RAG retrieval failed: ${ragResult.error}`);
+  }
+  
+  // Build RAG context (even if no specific matches, include summary)
+  let fullContext: string;
+  
+  if (ragResult.relevantPackets.length > 0) {
+    // Build context from relevant packets
     const ragContext = buildRAGContext(ragResult);
-    
-    // Also include summary statistics for full picture
+    const summaryContext = buildSummaryContext(packets, statistics, analysis);
+    fullContext = `${summaryContext}\n\n${ragContext}`;
+  } else {
+    // No specific matches but RAG is available - use summary only
+    console.log(`[RAG] No specific matches found, using summary context`);
     const summaryContext = buildSummaryContext(packets, statistics, analysis);
     
-    const fullContext = `${summaryContext}\n\n${ragContext}`;
-    const estimatedTokens = Math.ceil(fullContext.length / 4);
+    // Add some general packet samples for context
+    const samplePackets = packets.slice(0, 50).map((p, i) => 
+      `Packet #${p.id + 1}: ${p.protocol} ${p.source} → ${p.destination} (${p.length} bytes) - ${p.info.substring(0, 100)}`
+    ).join('\n');
     
-    console.log(`[RAG] Success! Using ${ragResult.relevantPackets.length} relevant packets, ${estimatedTokens} estimated tokens`);
-
-    return {
-      context: fullContext,
-      isRAGEnabled: true,
-      ragResult,
-      metrics: {
-        estimatedTokens,
-        relevantPacketCount: ragResult.relevantPackets.length,
-        matchCount: ragResult.matchCount,
-        method: 'rag',
-      },
-    };
-
-  } catch (error) {
-    console.error('RAG context preparation failed:', error);
-    
-    // Fall back to sampling on error
-    const { context, metrics } = prepareOptimizedContext(packets, statistics, analysis, maxTokens);
-    const optimizedContext = optimizeContextForQuery(context, 'query');
-    
-    return {
-      context: JSON.stringify(optimizedContext, null, 2),
-      isRAGEnabled: false,
-      fallbackContext: context,
-      metrics: {
-        estimatedTokens: metrics.estimatedTokens,
-        relevantPacketCount: metrics.packetCount,
-        matchCount: 0,
-        method: 'sampling',
-      },
-    };
+    fullContext = `${summaryContext}\n\n=== SAMPLE PACKETS ===\n${samplePackets}`;
   }
+
+  const estimatedTokens = Math.ceil(fullContext.length / 4);
+  
+  console.log(`[RAG] Success! Context: ${estimatedTokens} tokens, ${ragResult.relevantPackets.length} relevant packets`);
+
+  return {
+    context: fullContext,
+    isRAGEnabled: true,
+    ragResult,
+    metrics: {
+      estimatedTokens,
+      relevantPacketCount: ragResult.relevantPackets.length,
+      matchCount: ragResult.matchCount,
+      method: 'rag',
+    },
+  };
 }
 
 /**

@@ -19,10 +19,18 @@ export interface UploadProgress {
   error?: string;
 }
 
+export interface RAGIndexingProgress {
+  status: 'idle' | 'pending' | 'indexing' | 'complete' | 'failed';
+  percentage: number;
+  message: string;
+  isReady: boolean;
+}
+
 export interface PacketSessionState {
   sessionId: string | null;
   isUploaded: boolean;
   progress: UploadProgress;
+  ragProgress: RAGIndexingProgress;
 }
 
 interface UploadOptions {
@@ -156,10 +164,17 @@ export function usePacketSession(options: UploadOptions = {}) {
       totalPackets: 0,
       percentage: 0,
     },
+    ragProgress: {
+      status: 'idle',
+      percentage: 0,
+      message: '',
+      isReady: false,
+    },
   });
 
   const sessionIdRef = useRef<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const ragPollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -322,28 +337,78 @@ export function usePacketSession(options: UploadOptions = {}) {
         sessionId: currentSessionId,
         isUploaded: true,
         progress: completeProgress,
+        ragProgress: {
+          status: 'pending',
+          percentage: 0,
+          message: 'Starting AI indexing...',
+          isReady: false,
+        },
       });
       onProgress?.(completeProgress);
       onComplete?.(currentSessionId!);
 
-      // Auto-trigger RAG indexing for larger captures (>500 packets)
-      // This runs in background and doesn't block the upload completion
-      if (packets.length > 500 && currentSessionId) {
-        console.log(`[RAG] Auto-triggering indexing for ${packets.length} packets`);
-        // Fire and forget - indexing happens in background
-        fetch('/api/analyze/index', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId: currentSessionId }),
-        }).then(res => res.json()).then(result => {
+      // Start RAG indexing and poll for completion
+      if (currentSessionId) {
+        console.log(`[RAG] Starting indexing for ${packets.length} packets`);
+        
+        // Update status to pending
+        setState(prev => ({
+          ...prev,
+          ragProgress: {
+            status: 'pending',
+            percentage: 0,
+            message: 'Preparing AI indexing...',
+            isReady: false,
+          },
+        }));
+
+        // Trigger indexing
+        try {
+          const response = await fetch('/api/analyze/index', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId: currentSessionId }),
+          });
+          const result = await response.json();
+          
           if (result.success) {
-            console.log(`[RAG] Background indexing started: ${result.status}`);
+            console.log(`[RAG] Indexing complete: ${result.embeddingsCreated} embeddings`);
+            setState(prev => ({
+              ...prev,
+              ragProgress: {
+                status: 'complete',
+                percentage: 100,
+                message: 'SharkAI is ready!',
+                isReady: true,
+              },
+            }));
+          } else if (result.status === 'in_progress') {
+            // Start polling for completion
+            startRAGPolling(currentSessionId);
           } else {
-            console.warn(`[RAG] Background indexing failed:`, result.error);
+            console.error(`[RAG] Indexing failed:`, result.error);
+            setState(prev => ({
+              ...prev,
+              ragProgress: {
+                status: 'failed',
+                percentage: 0,
+                message: `Indexing failed: ${result.error}`,
+                isReady: false,
+              },
+            }));
           }
-        }).catch(err => {
-          console.warn(`[RAG] Background indexing error:`, err);
-        });
+        } catch (err) {
+          console.error(`[RAG] Indexing error:`, err);
+          setState(prev => ({
+            ...prev,
+            ragProgress: {
+              status: 'failed',
+              percentage: 0,
+              message: 'Failed to start AI indexing',
+              isReady: false,
+            },
+          }));
+        }
       }
 
       return currentSessionId;
@@ -378,11 +443,95 @@ export function usePacketSession(options: UploadOptions = {}) {
   }, [chunkSize, onProgress, onComplete, onError, state.progress]);
 
   /**
+   * Poll for RAG indexing completion
+   */
+  const startRAGPolling = useCallback((sessionId: string) => {
+    // Clear any existing polling
+    if (ragPollingRef.current) {
+      clearInterval(ragPollingRef.current);
+    }
+
+    setState(prev => ({
+      ...prev,
+      ragProgress: {
+        status: 'indexing',
+        percentage: 0,
+        message: 'AI is analyzing packets...',
+        isReady: false,
+      },
+    }));
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/analyze/index?sessionId=${sessionId}`);
+        const result = await response.json();
+
+        if (result.indexed || result.status === 'complete') {
+          // Indexing complete
+          clearInterval(pollInterval);
+          ragPollingRef.current = null;
+          
+          setState(prev => ({
+            ...prev,
+            ragProgress: {
+              status: 'complete',
+              percentage: 100,
+              message: 'SharkAI is ready!',
+              isReady: true,
+            },
+          }));
+          console.log(`[RAG] Polling: Indexing complete`);
+        } else if (result.status === 'failed') {
+          // Indexing failed
+          clearInterval(pollInterval);
+          ragPollingRef.current = null;
+          
+          setState(prev => ({
+            ...prev,
+            ragProgress: {
+              status: 'failed',
+              percentage: 0,
+              message: 'AI indexing failed. Please try re-uploading.',
+              isReady: false,
+            },
+          }));
+          console.error(`[RAG] Polling: Indexing failed`);
+        } else if (result.progress) {
+          // Update progress
+          const progress = result.progress;
+          const percentage = progress.percentage || 0;
+          
+          setState(prev => ({
+            ...prev,
+            ragProgress: {
+              status: 'indexing',
+              percentage,
+              message: `AI indexing: ${percentage}% complete...`,
+              isReady: false,
+            },
+          }));
+          console.log(`[RAG] Polling: ${percentage}% complete`);
+        }
+      } catch (error) {
+        console.error(`[RAG] Polling error:`, error);
+      }
+    }, 2000); // Poll every 2 seconds
+
+    ragPollingRef.current = pollInterval;
+  }, []);
+
+  /**
    * Cleanup session data from Supabase
    */
   const cleanupSession = useCallback(async (sessionId?: string): Promise<boolean> => {
     const targetSessionId = sessionId || sessionIdRef.current;
     if (!targetSessionId) return true;
+
+    // Stop RAG polling if active
+    if (ragPollingRef.current) {
+      clearInterval(ragPollingRef.current);
+      ragPollingRef.current = null;
+    }
 
     try {
       const response: Response = await fetch('/api/packets/cleanup', {
@@ -409,6 +558,12 @@ export function usePacketSession(options: UploadOptions = {}) {
             totalPackets: 0,
             percentage: 0,
           },
+          ragProgress: {
+            status: 'idle',
+            percentage: 0,
+            message: '',
+            isReady: false,
+          },
         });
       }
 
@@ -432,6 +587,12 @@ export function usePacketSession(options: UploadOptions = {}) {
    * Reset state without cleanup (for new file upload)
    */
   const resetState = useCallback(() => {
+    // Stop any RAG polling
+    if (ragPollingRef.current) {
+      clearInterval(ragPollingRef.current);
+      ragPollingRef.current = null;
+    }
+    
     setState({
       sessionId: null,
       isUploaded: false,
@@ -442,6 +603,12 @@ export function usePacketSession(options: UploadOptions = {}) {
         uploadedPackets: 0,
         totalPackets: 0,
         percentage: 0,
+      },
+      ragProgress: {
+        status: 'idle',
+        percentage: 0,
+        message: '',
+        isReady: false,
       },
     });
   }, []);
@@ -526,6 +693,11 @@ export function usePacketSession(options: UploadOptions = {}) {
   // Cleanup on page unload using sendBeacon
   useEffect(() => {
     const handleBeforeUnload = () => {
+      // Stop RAG polling
+      if (ragPollingRef.current) {
+        clearInterval(ragPollingRef.current);
+      }
+      
       if (sessionIdRef.current) {
         // Use sendBeacon for reliable cleanup on page close
         const data = JSON.stringify({ sessionId: sessionIdRef.current });
@@ -537,6 +709,10 @@ export function usePacketSession(options: UploadOptions = {}) {
     
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Stop RAG polling
+      if (ragPollingRef.current) {
+        clearInterval(ragPollingRef.current);
+      }
       // Cleanup on unmount
       if (sessionIdRef.current) {
         cleanupSession(sessionIdRef.current);
@@ -552,6 +728,7 @@ export function usePacketSession(options: UploadOptions = {}) {
     resetState,
     triggerRAGIndexing,
     checkRAGStatus,
+    startRAGPolling,
   };
 }
 

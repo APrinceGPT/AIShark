@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
-import { Send, Sparkles, AlertTriangle } from 'lucide-react';
+import { Send, Sparkles, Loader2 } from 'lucide-react';
 import { aiCache } from '@/lib/ai-cache';
 import { toast } from './ToastContainer';
 import FormattedAIResponse from './FormattedAIResponse';
+import { RAGIndexingProgress } from '@/lib/use-packet-session';
 
 // Help question detection (matches server-side logic)
 const HELP_KEYWORDS = [
@@ -31,6 +32,7 @@ interface ChatInterfaceProps {
   analysis: AnalysisResult | null;
   onPacketClick?: (packetId: number) => void;
   sessionId?: string | null;
+  ragProgress?: RAGIndexingProgress;
 }
 
 interface Message {
@@ -38,16 +40,20 @@ interface Message {
   content: string;
   timestamp: number;
   metadata?: {
-    contextMethod?: 'rag' | 'sampling' | 'hybrid';
+    contextMethod?: 'rag';
     ragMatches?: number;
   };
 }
 
-export default function ChatInterface({ packets, statistics, analysis, onPacketClick, sessionId }: ChatInterfaceProps) {
+export default function ChatInterface({ packets, statistics, analysis, onPacketClick, sessionId, ragProgress }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Check if RAG is ready (required for packet analysis)
+  const isRAGReady = ragProgress?.isReady ?? false;
+  const ragStatus = ragProgress?.status ?? 'idle';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,6 +72,12 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
     // Require packets for non-help questions
     if (!isHelp && packets.length === 0) {
       toast.error('Upload a packet capture first to ask analysis questions');
+      return;
+    }
+    
+    // Require RAG to be ready for non-help questions
+    if (!isHelp && !isRAGReady && sessionId) {
+      toast.error('Please wait for RAG indexing to complete before asking questions');
       return;
     }
 
@@ -113,6 +125,19 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
       });
 
       const data = await response.json();
+      
+      // Handle RAG not ready (503 response)
+      if (response.status === 503 && data.ragNotReady) {
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: `⏳ **RAG Indexing In Progress**\n\n${data.ragStatus?.message || 'Please wait for indexing to complete.'}\n\nCurrent progress: ${data.ragStatus?.percentage || 0}%`,
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        toast.warning('RAG indexing is still in progress. Please wait.');
+        setLoading(false);
+        return;
+      }
 
       if (data.success) {
         const assistantMessage: Message = {
@@ -199,6 +224,30 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4 chat-scrollbar">
+        {/* RAG Indexing Progress Bar */}
+        {sessionId && !isRAGReady && ragStatus !== 'idle' && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 animate-fade-in">
+            <div className="flex items-center gap-3 mb-2">
+              <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+              <span className="font-medium text-blue-700 dark:text-blue-300">
+                RAG Indexing in Progress
+              </span>
+            </div>
+            <p className="text-sm text-blue-600 dark:text-blue-400 mb-3">
+              {ragProgress?.message || 'Processing packet embeddings...'}
+            </p>
+            <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2.5 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2.5 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${ragProgress?.percentage || 0}%` }}
+              />
+            </div>
+            <p className="text-xs text-blue-500 dark:text-blue-400 mt-2">
+              {ragProgress?.percentage || 0}% complete • SharkAI will be available once indexing finishes
+            </p>
+          </div>
+        )}
+        
         {messages.length === 0 && (
           <div className="text-center py-8 animate-fade-in">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-linear-to-br from-blue-500/10 to-indigo-500/10 dark:from-blue-500/20 dark:to-indigo-500/20 flex items-center justify-center">
@@ -207,7 +256,9 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {packets.length === 0 
                 ? 'Upload a packet capture to start analyzing'
-                : 'Ask questions about your packet capture'
+                : sessionId && !isRAGReady
+                  ? 'Wait for RAG indexing to complete, then ask questions'
+                  : 'Ask questions about your packet capture'
               }
             </p>
             <div className="space-y-2 max-w-sm mx-auto">
@@ -240,18 +291,7 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
               }`}
             >
               {msg.role === 'assistant' ? (
-                <>
-                  <FormattedAIResponse content={msg.content} onPacketClick={onPacketClick} />
-                  {msg.metadata?.contextMethod === 'sampling' && (
-                    <div className="mt-3 flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-3 py-2">
-                      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>
-                        <strong>Limited context:</strong> Using random sampling ({msg.metadata?.ragMatches || 'N/A'} packets). 
-                        For more accurate results, wait for RAG indexing to complete.
-                      </span>
-                    </div>
-                  )}
-                </>
+                <FormattedAIResponse content={msg.content} onPacketClick={onPacketClick} />
               ) : (
                 <p className="whitespace-pre-wrap">{msg.content}</p>
               )}
@@ -293,14 +333,16 @@ export default function ChatInterface({ packets, statistics, analysis, onPacketC
             placeholder={
               packets.length === 0
                 ? 'Upload a capture file first...'
-                : 'Ask a question about your capture...'
+                : sessionId && !isRAGReady
+                  ? 'Waiting for RAG indexing to complete...'
+                  : 'Ask a question about your capture...'
             }
-            disabled={loading}
+            disabled={loading || (sessionId !== null && !isRAGReady)}
             className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 dark:focus:border-blue-400 focus:shadow-lg focus:shadow-blue-500/10 disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed transition-all duration-200"
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || (sessionId !== null && !isRAGReady)}
             className="px-5 py-3 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 transition-all duration-200 flex items-center gap-2"
           >
             <Send className="w-5 h-5" />

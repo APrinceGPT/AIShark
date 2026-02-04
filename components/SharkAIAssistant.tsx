@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Packet, PacketStatistics, AnalysisResult } from '@/types/packet';
-import { X, Minus, Maximize2, Minimize2, Send, Trash2, GripHorizontal, Sparkles, AlertTriangle } from 'lucide-react';
+import { X, Minus, Maximize2, Minimize2, Send, Trash2, GripHorizontal, Sparkles, Loader2 } from 'lucide-react';
 import { aiCache } from '@/lib/ai-cache';
 import { toast } from './ToastContainer';
 import FormattedAIResponse from './FormattedAIResponse';
+import { RAGIndexingProgress } from '@/lib/use-packet-session';
 
 interface SharkAIAssistantProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface SharkAIAssistantProps {
   analysis: AnalysisResult | null;
   onPacketClick?: (packetId: number) => void;
   sessionId?: string | null;
+  ragProgress?: RAGIndexingProgress;
 }
 
 interface Message {
@@ -23,7 +25,7 @@ interface Message {
   content: string;
   timestamp: number;
   metadata?: {
-    contextMethod?: 'rag' | 'sampling' | 'hybrid';
+    contextMethod?: 'rag';
     ragMatches?: number;
   };
 }
@@ -47,6 +49,7 @@ export default function SharkAIAssistant({
   analysis,
   onPacketClick,
   sessionId,
+  ragProgress,
 }: SharkAIAssistantProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -57,6 +60,10 @@ export default function SharkAIAssistant({
   const [size, setSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  
+  // Check if RAG is ready (required for packet analysis)
+  const isRAGReady = ragProgress?.isReady ?? false;
+  const ragStatus = ragProgress?.status ?? 'idle';
   
   const containerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -116,6 +123,12 @@ export default function SharkAIAssistant({
 
   const handleSend = async () => {
     if (!input.trim() || loading || packets.length === 0) return;
+    
+    // Require RAG to be ready for queries
+    if (!isRAGReady && sessionId) {
+      toast.error('Please wait for RAG indexing to complete before asking questions');
+      return;
+    }
 
     const userMessage: Message = {
       role: 'user',
@@ -163,6 +176,19 @@ export default function SharkAIAssistant({
       });
 
       const data = await response.json();
+      
+      // Handle RAG not ready (503 response)
+      if (response.status === 503 && data.ragNotReady) {
+        const errorMessage: Message = {
+          role: 'assistant',
+          content: `⏳ **RAG Indexing In Progress**\n\n${data.ragStatus?.message || 'Please wait for indexing to complete.'}\n\nCurrent progress: ${data.ragStatus?.percentage || 0}%`,
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        toast.warning('RAG indexing is still in progress. Please wait.');
+        setLoading(false);
+        return;
+      }
 
       if (data.success) {
         const assistantMessage: Message = {
@@ -351,6 +377,30 @@ export default function SharkAIAssistant({
 
         {/* Messages Area with Custom Scrollbar */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 chat-scrollbar">
+          {/* RAG Indexing Progress Bar */}
+          {sessionId && !isRAGReady && ragStatus !== 'idle' && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 animate-fade-in">
+              <div className="flex items-center gap-3 mb-2">
+                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                <span className="font-medium text-blue-700 dark:text-blue-300 text-sm">
+                  RAG Indexing
+                </span>
+              </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+                {ragProgress?.message || 'Processing...'}
+              </p>
+              <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${ragProgress?.percentage || 0}%` }}
+                />
+              </div>
+              <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">
+                {ragProgress?.percentage || 0}% • SharkAI unavailable
+              </p>
+            </div>
+          )}
+          
           {messages.length === 0 && (
             <div className="text-center py-6 animate-fade-in">
               <div className="w-16 h-16 mx-auto mb-4 bg-linear-to-br from-blue-500/20 to-cyan-500/20 dark:from-blue-500/30 dark:to-cyan-500/30 rounded-2xl flex items-center justify-center">
@@ -359,9 +409,11 @@ export default function SharkAIAssistant({
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
                 {packets.length === 0
                   ? 'Upload a capture file to start analyzing'
-                  : 'Ask questions about your packet capture'}
+                  : sessionId && !isRAGReady
+                    ? 'Wait for RAG indexing to complete'
+                    : 'Ask questions about your packet capture'}
               </p>
-              {packets.length > 0 && (
+              {packets.length > 0 && isRAGReady && (
                 <div className="space-y-2">
                   {quickQuestions.map((q, i) => (
                     <button
@@ -392,14 +444,6 @@ export default function SharkAIAssistant({
                 {msg.role === 'assistant' ? (
                   <div className="text-sm">
                     <FormattedAIResponse content={msg.content} onPacketClick={onPacketClick} />
-                    {msg.metadata?.contextMethod === 'sampling' && (
-                      <div className="mt-3 flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg px-2.5 py-2">
-                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>Limited context:</strong> Random sampling used. Results may be incomplete.
-                        </span>
-                      </div>
-                    )}
                   </div>
                 ) : (
                   <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
@@ -449,15 +493,19 @@ export default function SharkAIAssistant({
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyPress}
                 placeholder={
-                  packets.length === 0 ? 'Upload a file first...' : 'Ask SharkAI anything...'
+                  packets.length === 0 
+                    ? 'Upload a file first...' 
+                    : sessionId && !isRAGReady
+                      ? 'Waiting for RAG indexing...'
+                      : 'Ask SharkAI anything...'
                 }
-                disabled={loading || packets.length === 0}
+                disabled={loading || packets.length === 0 || (sessionId !== null && !isRAGReady)}
                 className="w-full px-4 py-3 text-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200"
               />
             </div>
             <button
               onClick={handleSend}
-              disabled={!input.trim() || loading || packets.length === 0}
+              disabled={!input.trim() || loading || packets.length === 0 || (sessionId !== null && !isRAGReady)}
               className="p-3 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl hover:shadow-lg hover:scale-105 disabled:from-gray-400 disabled:to-gray-500 dark:disabled:from-gray-600 dark:disabled:to-gray-700 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none transition-all duration-200"
               title="Send message"
             >

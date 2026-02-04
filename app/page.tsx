@@ -94,13 +94,14 @@ export default function Home() {
     sessionId: packetSessionId, 
     isUploaded: isPacketSessionUploaded,
     progress: uploadProgress,
+    ragProgress,
     uploadPackets,
     cleanupSession,
     resetState: resetPacketSession,
   } = usePacketSession({
     onComplete: (sessionId) => {
       console.log('Packet session uploaded:', sessionId);
-      toast.success('Packets uploaded for AI analysis');
+      toast.success('Packets uploaded. AI indexing in progress...');
     },
     onError: (error) => {
       console.error('Packet session upload failed:', error);
@@ -1011,6 +1012,7 @@ export default function Home() {
                   analysis={analysis}
                   onPacketClick={handlePacketClick}
                   sessionId={packetSessionId}
+                  ragProgress={ragProgress}
                 />
               </div>
             )}
@@ -1151,6 +1153,7 @@ export default function Home() {
         analysis={analysis}
         onPacketClick={handlePacketClick}
         sessionId={packetSessionId}
+        ragProgress={ragProgress}
       />
     </main>
   );
