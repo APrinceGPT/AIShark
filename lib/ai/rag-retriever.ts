@@ -10,9 +10,9 @@ import { generateEmbedding } from './embeddings';
 import { getIndexingStatus } from './packet-indexer';
 
 // Configuration
-const DEFAULT_MATCH_COUNT = 20;       // Number of relevant groups to retrieve
-const DEFAULT_THRESHOLD = 0.65;       // Minimum similarity threshold
-const MAX_PACKETS_TO_RETURN = 100;    // Maximum packets in context
+const DEFAULT_MATCH_COUNT = 30;        // Increased from 20
+const DEFAULT_THRESHOLD = 0.5;         // Lowered from 0.65 for more matches
+const MAX_PACKETS_TO_RETURN = 100;     // Maximum packets in context
 
 export interface RelevantPacketGroup {
   packetGroupStart: number;
@@ -59,7 +59,10 @@ export async function retrieveRelevantPackets(
   // Check if session is indexed
   const indexStatus = await getIndexingStatus(sessionId);
   
+  console.log(`[RAG Retriever] Checking index status for session ${sessionId}:`, indexStatus);
+  
   if (!indexStatus || indexStatus.status !== 'complete') {
+    console.warn(`[RAG Retriever] Session ${sessionId} not indexed. Status: ${indexStatus?.status || 'null'}`);
     return {
       success: false,
       isIndexed: false,
@@ -70,11 +73,12 @@ export async function retrieveRelevantPackets(
       matchCount: 0,
       error: indexStatus?.status === 'failed' 
         ? 'Indexing failed: ' + indexStatus.error
-        : 'Session not indexed for RAG search',
+        : `Session not indexed for RAG search (status: ${indexStatus?.status || 'not found'})`,
     };
   }
 
   if (!supabase) {
+    console.error(`[RAG Retriever] Supabase client not available`);
     return {
       success: false,
       isIndexed: true,
@@ -89,10 +93,14 @@ export async function retrieveRelevantPackets(
 
   try {
     // Generate embedding for the query
+    console.log(`[RAG Retriever] Generating embedding for query: "${query.substring(0, 50)}..."`);
     const queryEmbedding = await generateEmbedding(query);
+    console.log(`[RAG Retriever] Embedding generated (${queryEmbedding.length} dimensions)`);
     
     // Search for similar packet groups
     let searchResult;
+    
+    console.log(`[RAG Retriever] Searching with threshold=${threshold}, matchCount=${matchCount}, protocolFilter=${protocolFilter || 'none'}`);
     
     if (protocolFilter) {
       // Use protocol-filtered search
@@ -114,7 +122,7 @@ export async function retrieveRelevantPackets(
     }
 
     if (searchResult.error) {
-      console.error('RAG search error:', searchResult.error);
+      console.error('[RAG Retriever] Search error:', searchResult.error);
       return {
         success: false,
         isIndexed: true,
@@ -128,6 +136,7 @@ export async function retrieveRelevantPackets(
     }
 
     const matches = searchResult.data || [];
+    console.log(`[RAG Retriever] Found ${matches.length} matching groups`);
     
     // Convert to RelevantPacketGroup format
     const relevantGroups: RelevantPacketGroup[] = matches.map((m: {

@@ -43,7 +43,10 @@ export async function indexSessionPackets(
   packets: Packet[],
   onProgress?: (progress: IndexingProgress) => void
 ): Promise<IndexingResult> {
+  console.log(`[Packet Indexer] Starting indexing for session ${sessionId} (${packets.length} packets)`);
+  
   if (!supabase) {
+    console.error(`[Packet Indexer] Supabase not available`);
     return { 
       success: false, 
       sessionId, 
@@ -56,6 +59,7 @@ export async function indexSessionPackets(
   const totalPackets = packets.length;
   
   // Initialize or update status
+  console.log(`[Packet Indexer] Setting status to 'indexing'`);
   await updateEmbeddingStatus(sessionId, {
     status: 'indexing',
     totalPackets,
@@ -157,6 +161,7 @@ export async function indexSessionPackets(
     }
 
     // Mark complete
+    console.log(`[Packet Indexer] Marking session ${sessionId} as complete: ${embeddingsCreated} embeddings, ${packetsIndexed} packets`);
     await updateEmbeddingStatus(sessionId, {
       status: 'complete',
       indexedPackets: packetsIndexed,
@@ -173,6 +178,7 @@ export async function indexSessionPackets(
       percentage: 100,
     });
 
+    console.log(`[Packet Indexer] Successfully indexed session ${sessionId}`);
     return {
       success: true,
       sessionId,
@@ -182,6 +188,7 @@ export async function indexSessionPackets(
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[Packet Indexer] Failed to index session ${sessionId}:`, errorMessage);
     
     await updateEmbeddingStatus(sessionId, {
       status: 'failed',

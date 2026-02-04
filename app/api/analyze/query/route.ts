@@ -88,6 +88,8 @@ export async function POST(request: NextRequest) {
     // Determine whether to use RAG or traditional sampling
     const useRAG = sessionId && shouldUseRAG(packets.length);
     
+    console.log(`[Query API] Session: ${sessionId}, Packets: ${packets.length}, UseRAG: ${useRAG}`);
+    
     let contextForAI: string;
     let contextMethod: 'rag' | 'sampling' | 'hybrid' = 'sampling';
     let estimatedTokens: number;
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
 
     if (useRAG && sessionId) {
       // Use RAG-enhanced context building
-      console.log(`Using RAG for session ${sessionId} (${packets.length} packets)`);
+      console.log(`[Query API] Attempting RAG for session ${sessionId}`);
       
       const ragContext = await prepareRAGContext(
         sessionId,
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
       estimatedTokens = ragContext.metrics.estimatedTokens;
       ragMatchCount = ragContext.metrics.matchCount;
       
-      console.log(`RAG context: ${estimatedTokens} tokens, ${ragMatchCount} matches, method: ${contextMethod}`);
+      console.log(`[Query API] Context method: ${contextMethod}, Tokens: ${estimatedTokens}, RAG matches: ${ragMatchCount}`);
     } else {
       // Use traditional sampling
       const { context: fullContext, metrics } = prepareOptimizedContext(
